@@ -478,6 +478,10 @@ function CategorySidebar({
   );
 }
 
+function getProductDetailKey(product: ProductRow) {
+  return String(product.id ?? product.legacyNo ?? product.name ?? '');
+}
+
 export default function ProductsPage() {
   const { data, loading, error, refresh } = useSheetData<ProductRow>('Products');
 
@@ -505,6 +509,20 @@ export default function ProductsPage() {
   const [selected, setSelected] = useState<ProductRow | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
+
+  useEffect(() => {
+    const requestedDetailKey = new URLSearchParams(window.location.search).get('detail');
+
+    if (!requestedDetailKey || products.length === 0) return;
+
+    const requestedProduct = products.find(
+      (item) => getProductDetailKey(item) === requestedDetailKey,
+    );
+
+    if (requestedProduct) {
+      setSelected(requestedProduct);
+    }
+  }, [products]);
 
   useEffect(() => {
     void refresh();
@@ -818,8 +836,18 @@ export default function ProductsPage() {
                         ease: [0.22, 1, 0.36, 1],
                       }}
                       whileHover={{ y: -9 }}
-                      className="site-card product-card product-catalog-card"
-                    >
+                      className="site-card product-card product-catalog-card product-card-clickable"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Lihat detail ${product.name || 'Produk'}`}
+                  onClick={() => setSelected(product)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setSelected(product);
+                    }
+                  }}
+                >
                       <div className="product-card-ambient" />
                       <div className="product-image-wrap">
                         <div className="product-card-badges">
@@ -938,18 +966,15 @@ export default function ProductsPage() {
                             </div>
                           )}
                         </div>
-                        <div className="product-card-actions">
-                          <button
-                            type="button"
-                            className="site-button site-button-secondary"
-                            onClick={() => setSelected(product)}
-                          >
-                            {getContent('products_detail_button', 'Detail')}
-                          </button>
-                          <Link href="/contact" className="site-button site-button-primary">
+                        <div className="product-card-actions product-card-actions-single">
+                    <Link
+                      href="/contact"
+                      className="site-button site-button-primary"
+                      onClick={(event) => event.stopPropagation()}
+                    >
                             {getContent('products_offer_button', 'Penawaran')}
                           </Link>
-                        </div>
+                  </div>
                       </div>
                     </motion.article>
                   ))}

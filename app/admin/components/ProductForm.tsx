@@ -482,7 +482,7 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
         <div className="flex items-center gap-4">
           <Link
             href="/admin/products"
-            className="grid h-10 w-10 place-items-center rounded-xl border border-white/[0.08] text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+            className="grid h-10 w-10 place-items-center rounded-xl border border-white/8 text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
             aria-label="Kembali ke daftar produk"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -598,7 +598,7 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
             </label>
           </div>
 
-          <div className="grid gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 md:grid-cols-2">
+          <div className="grid gap-4 rounded-2xl border border-white/8 bg-white/2.5 p-4 md:grid-cols-2">
             <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-200">
               <input
                 type="checkbox"

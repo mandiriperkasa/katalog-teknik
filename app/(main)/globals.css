@@ -696,15 +696,19 @@ html[data-site-theme='light'] .mp-background {
   color: transparent;
   background: linear-gradient(
     100deg,
-    var(--accent-cyan),
-    var(--accent-blue) 42%,
-    var(--accent-violet) 74%,
-    var(--accent-pink)
+    var(--accent-cyan) 0%,
+    var(--accent-blue) 20%,
+    var(--accent-violet) 40%,
+    var(--accent-pink) 60%,
+    var(--accent-violet) 80%,
+    var(--accent-cyan) 100%
   );
-  background-size: 180% 100%;
+  background-size: 300% 100%;
+  background-position: 0% 50%;
   background-clip: text;
   -webkit-background-clip: text;
-  animation: gradient-flow 7s linear infinite;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-flow 8s ease-in-out infinite alternate;
 }
 
 .hero-section {
@@ -4340,9 +4344,13 @@ html[data-site-theme='dark'] .hero-background-overlay {
   .product-grid .product-card-actions button,
   .product-catalog-grid .product-card-actions a,
   .product-catalog-grid .product-card-actions button {
-    min-height: 28px !important;
-    padding: 5px 4px !important;
-    font-size: 9px !important;
+    min-height: 38px !important;
+    padding: 9px 6px !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    letter-spacing: 0.01em !important;
+    color: #ffffff !important;
   }
 
   .product-grid .product-card-actions > :nth-child(n + 2),
@@ -4366,3 +4374,62 @@ html[data-site-theme='dark'] .hero-background-overlay {
   }
 }
 /* === AKHIR REVISI V7.2 === */
+
+/* === REVISI V8: CARD KLIK DETAIL === */
+.product-card-clickable {
+  cursor: pointer;
+}
+
+.product-card-clickable:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 75%, white 25%);
+  outline-offset: 4px;
+}
+
+.product-card-actions.product-card-actions-single {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.product-card-actions.product-card-actions-single .site-button {
+  width: 100%;
+}
+.product-card-actions .site-button,
+.product-card-actions a,
+.product-card-actions button {
+  font-weight: 800;
+  color: #ffffff;
+}
+/* Paksa tulisan tombol Penawaran agar jelas */
+.product-card .product-card-actions .site-button,
+.product-catalog-card .product-card-actions .site-button,
+.product-grid .product-card-actions a,
+.product-catalog-grid .product-card-actions a {
+  min-height: 42px !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0 !important;
+  color: #ffffff !important;
+}
+
+/* Jika teks Penawaran dibungkus span */
+.product-card .product-card-actions .site-button *,
+.product-catalog-card .product-card-actions .site-button *,
+.product-grid .product-card-actions a *,
+.product-catalog-grid .product-card-actions a * {
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  color: #ffffff !important;
+}
+
+@media (max-width: 640px) {
+  .product-card .product-card-actions .site-button,
+  .product-catalog-card .product-card-actions .site-button,
+  .product-grid .product-card-actions a,
+  .product-catalog-grid .product-card-actions a,
+  .product-card .product-card-actions .site-button *,
+  .product-catalog-card .product-card-actions .site-button * {
+    font-size: 13px !important;
+    font-weight: 900 !important;
+  }
+}

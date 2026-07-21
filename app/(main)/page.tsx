@@ -162,6 +162,11 @@ function getTopSellingProducts(products: ProductRow[]) {
     .slice(0, 10);
 }
 
+function getProductDetailHref(product: ProductRow) {
+  const detailKey = product.id ?? product.legacyNo ?? product.name ?? '';
+  return `/products?detail=${encodeURIComponent(String(detailKey))}`;
+}
+
 export default function Home() {
   const [wordIndex, setWordIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState('Semua');
@@ -522,7 +527,7 @@ export default function Home() {
               <motion.article
                 layout
                 key={`${resolvedActiveCategory}-${product.legacyNo ?? index}-${product.name ?? 'produk'}`}
-                className="site-card product-card product-catalog-card"
+                className="site-card product-card product-catalog-card product-card-clickable"
                 data-aos="fade-up"
                 data-aos-delay={String((index % 3) * 90)}
                 initial={{ opacity: 0, y: 24, scale: 0.96 }}
@@ -530,7 +535,20 @@ export default function Home() {
                 exit={{ opacity: 0, y: 16, scale: 0.96 }}
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={{ y: -9 }}
-              >
+              
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Lihat detail ${product.name || 'Produk'}`}
+                  onClick={() => {
+                    window.location.href = getProductDetailHref(product);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      window.location.href = getProductDetailHref(product);
+                    }
+                  }}
+                >
                 <div className="product-card-glow" />
                 <div className="product-image-wrap">
                   <div className="product-badge-stack">
@@ -624,12 +642,12 @@ export default function Home() {
                     </div>
                   )}
 
-                  <div className="product-card-actions">
-                    <Link href="/products" className="site-button site-button-secondary">
-                      Detail
-                    </Link>
-
-                    <Link href="/contact" className="site-button site-button-primary">
+                  <div className="product-card-actions product-card-actions-single">
+                    <Link
+                      href="/contact"
+                      className="site-button site-button-primary"
+                      onClick={(event) => event.stopPropagation()}
+                    >
                       Penawaran
                     </Link>
                   </div>

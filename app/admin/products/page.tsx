@@ -205,10 +205,10 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      <section className="admin-panel rounded-[24px] p-4 sm:p-5">
+      <section className="admin-panel rounded-3xl p-4 sm:p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-600" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-600" />
             <input
               type="search"
               value={search}
