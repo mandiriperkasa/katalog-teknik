@@ -1052,8 +1052,12 @@ html[data-site-theme='light'] .mp-background {
 
 .product-image-wrap {
   position: relative;
-  aspect-ratio: 1.25;
-  margin: 10px;
+  width: calc(100% - 20px);
+  max-width: calc(100% - 20px);
+  aspect-ratio: 1 / 1;
+  margin: 10px auto 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 21px;
@@ -3818,18 +3822,23 @@ html[data-site-theme='light'] .hero-visual-panel-clean {
   text-align: center !important;
 }
 
-/* Card produk selalu persegi 1:1 dan foto memenuhi kotak. */
+/* Card produk selalu persegi 1:1 dan berada tepat di tengah. */
 .product-card .product-image-wrap,
 .product-catalog-card .product-image-wrap {
-  width: 100% !important;
+  width: calc(100% - 20px) !important;
+  max-width: calc(100% - 20px) !important;
   height: auto !important;
   min-height: 0 !important;
+  margin: 10px auto 0 !important;
+  box-sizing: border-box !important;
   aspect-ratio: 1 / 1 !important;
   overflow: hidden !important;
 }
 
 .product-card .product-image,
 .product-catalog-card .product-image {
+  width: 100% !important;
+  height: 100% !important;
   object-fit: cover !important;
   object-position: center !important;
 }
@@ -4235,4 +4244,13 @@ html[data-site-theme='dark'] .hero-background-overlay {
 .hero-content-layer {
   position: relative;
   z-index: 2;
+}
+
+/* Pusatkan kotak gambar pada kartu produk */
+.product-card > .product-image-wrap {
+  width: calc(100% - 24px);
+  max-width: calc(100% - 24px);
+  margin: 12px auto 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
