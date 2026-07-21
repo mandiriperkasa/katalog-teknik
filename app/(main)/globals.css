@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+﻿@import 'tailwindcss';
 
 :root,
 html[data-site-theme='dark'] {
@@ -2867,7 +2867,7 @@ html[data-site-theme='light'] .hero-visual-panel-clean {
   line-height: 1.75;
 }
 
-/* Product catalog — advanced three-level category navigation */
+/* Product catalog â€” advanced three-level category navigation */
 .product-catalog-layout {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
@@ -3572,7 +3572,7 @@ html[data-site-theme='light'] .hero-visual-panel-clean {
   }
 }
 
-/* Product catalogue — compact density and scalable pagination */
+/* Product catalogue â€” compact density and scalable pagination */
 .product-toolbar-actions {
   display: flex;
   align-items: center;
@@ -3914,7 +3914,7 @@ html[data-site-theme='dark'] .hero-section-fullscreen::before {
 }
 
 /* === REVISI KLIEN V5: MP CENTER + SCROLL FOR MORE === */
-/* Teks hero rata kiri sejajar dengan “Temukan Solusi”. */
+/* Teks hero rata kiri sejajar dengan â€œTemukan Solusiâ€. */
 .hero-section-fullscreen .hero-content,
 .hero-section-fullscreen .hero-copy,
 .hero-section-fullscreen .hero-dynamic-row,
@@ -4254,3 +4254,115 @@ html[data-site-theme='dark'] .hero-background-overlay {
   box-sizing: border-box;
   flex-shrink: 0;
 }
+
+/* === REVISI V7.2: MOBILE 3 KOLOM === */
+@media (max-width: 640px) {
+  .product-grid,
+  .product-catalog-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+
+  .product-grid .product-card,
+  .product-catalog-grid .product-card,
+  .product-catalog-grid .product-catalog-card {
+    min-width: 0 !important;
+    width: 100% !important;
+    border-radius: 14px !important;
+  }
+
+  .product-grid .product-image-wrap,
+  .product-catalog-grid .product-image-wrap {
+    width: calc(100% - 10px) !important;
+    max-width: calc(100% - 10px) !important;
+    margin: 5px auto 0 !important;
+    border-radius: 10px !important;
+    aspect-ratio: 1 / 1 !important;
+  }
+
+  .product-grid .product-card-body,
+  .product-catalog-grid .product-card-body,
+  .product-catalog-grid .product-content {
+    padding: 7px !important;
+    gap: 4px !important;
+  }
+
+  .product-grid .product-title,
+  .product-catalog-grid .product-title,
+  .product-catalog-grid .product-card-title {
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .product-grid .product-price,
+  .product-catalog-grid .product-price {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+  }
+
+  .product-grid .product-meta,
+  .product-catalog-grid .product-meta,
+  .product-grid .product-description,
+  .product-catalog-grid .product-description,
+  .product-grid .product-sold,
+  .product-catalog-grid .product-sold {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+  }
+
+  .product-grid .product-badges,
+  .product-catalog-grid .product-badges {
+    gap: 3px !important;
+    padding: 4px !important;
+  }
+
+  .product-grid .product-badge,
+  .product-catalog-grid .product-badge {
+    font-size: 7px !important;
+    padding: 3px 4px !important;
+  }
+
+  .product-grid .product-card-actions,
+  .product-catalog-grid .product-card-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 4px !important;
+    padding: 0 7px 7px !important;
+  }
+
+  .product-grid .product-card-actions a,
+  .product-grid .product-card-actions button,
+  .product-catalog-grid .product-card-actions a,
+  .product-catalog-grid .product-card-actions button {
+    min-height: 28px !important;
+    padding: 5px 4px !important;
+    font-size: 9px !important;
+  }
+
+  .product-grid .product-card-actions > :nth-child(n + 2),
+  .product-catalog-grid .product-card-actions > :nth-child(n + 2) {
+    display: none !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .product-grid,
+  .product-catalog-grid {
+    gap: 6px !important;
+  }
+
+  .product-grid .product-title,
+  .product-catalog-grid .product-title,
+  .product-catalog-grid .product-card-title,
+  .product-grid .product-price,
+  .product-catalog-grid .product-price {
+    font-size: 10px !important;
+  }
+}
+/* === AKHIR REVISI V7.2 === */

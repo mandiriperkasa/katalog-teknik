@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import './globals.css';
@@ -19,7 +19,7 @@ type SettingRow = {
 };
 
 const metadataFallback = {
-  siteName: 'MP Katalog Teknik',
+  siteName: 'Mandiri Perkakas',
   description: 'Katalog peralatan otomotif, hidraulis, dan perlengkapan teknik profesional.',
 };
 
@@ -53,7 +53,11 @@ async function getMetadataSettings() {
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getMetadataSettings();
 
-  const siteName = settings.general_site_name?.trim() || metadataFallback.siteName;
+    const configuredSiteName = settings.general_site_name?.trim();
+  const siteName =
+    !configuredSiteName || configuredSiteName === 'MP Katalog Teknik'
+      ? metadataFallback.siteName
+      : configuredSiteName;
   const description = settings.general_meta_description?.trim() || metadataFallback.description;
 
   return {
@@ -82,3 +86,4 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     </ThemeProvider>
   );
 }
+
