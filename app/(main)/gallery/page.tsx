@@ -3,7 +3,13 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpRight, Images, MapPin, Play, Sparkles, Video, X } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { createPortal } from 'react-dom';
 
 import { useSheetData } from '../../hooks/useSheetData';
@@ -122,7 +128,7 @@ export default function GalleryPage() {
 
     document.body.style.overflow = 'hidden';
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === 'Escape') {
         setSelectedItem(null);
       }
@@ -225,7 +231,7 @@ export default function GalleryPage() {
                 className="group site-card gallery-card cursor-pointer"
                 whileHover={{ y: -6 }}
                 onClick={() => setSelectedItem(item)}
-                onKeyDown={(event) => {
+                onKeyDown={(event: ReactKeyboardEvent<HTMLElement>) => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
                     setSelectedItem(item);
@@ -237,10 +243,12 @@ export default function GalleryPage() {
               >
                 {item.mediaType === 'youtube' && item.youtubeVideoId ? (
                   <>
-                    <img
+                    <Image
                       src={`https://i.ytimg.com/vi/${item.youtubeVideoId}/hqdefault.jpg`}
                       alt={item.title || 'Thumbnail video YouTube'}
-                      loading={index === 0 ? 'eager' : 'lazy'}
+                      fill
+                      sizes="(max-width: 760px) 100vw, (max-width: 1040px) 50vw, 66vw"
+                      priority={index === 0}
                       className="gallery-image"
                     />
 
@@ -375,7 +383,7 @@ export default function GalleryPage() {
                       duration: 0.3,
                       ease: [0.22, 1, 0.36, 1],
                     }}
-                    onClick={(event) => event.stopPropagation()}
+                    onClick={(event: ReactMouseEvent<HTMLDivElement>) => event.stopPropagation()}
                     className="relative grid w-full max-w-6xl overflow-hidden rounded-[28px] border border-white/10 bg-[#08111f] shadow-[0_40px_120px_rgba(0,0,0,0.65)] lg:my-auto lg:max-h-[calc(100dvh-3rem)] lg:grid-cols-[1.3fr_0.7fr]"
                   >
                     <button

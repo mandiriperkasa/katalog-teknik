@@ -6,7 +6,6 @@ import {
   ArrowUpRight,
   BadgeCheck,
   Boxes,
-  CheckCircle2,
   Gauge,
   Headphones,
   PackageCheck,
@@ -21,7 +20,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useSheetData } from '../hooks/useSheetData';
-import MPBackground from './components/MPBackground';
 import PartnerLogoStrip from './components/PartnerLogoStrip';
 import SectionHeading from './components/SectionHeading';
 
@@ -245,8 +243,6 @@ export default function Home() {
       (product) => getProductCategory(product) === resolvedActiveCategory,
     );
   }, [resolvedActiveCategory, bestSellerProducts]);
-
-  const heroProduct = bestSellerProducts[0] ?? allProducts[0] ?? fallbackProducts[0];
 
   const heroBackgroundImage = content.hero_background_url?.trim() || '';
 
@@ -535,20 +531,20 @@ export default function Home() {
                 exit={{ opacity: 0, y: 16, scale: 0.96 }}
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={{ y: -9 }}
-              
-                  role="link"
-                  tabIndex={0}
-                  aria-label={`Lihat detail ${product.name || 'Produk'}`}
-                  onClick={() => {
+
+                role="link"
+                tabIndex={0}
+                aria-label={`Lihat detail ${product.name || 'Produk'}`}
+                onClick={() => {
+                  window.location.href = getProductDetailHref(product);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
                     window.location.href = getProductDetailHref(product);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      window.location.href = getProductDetailHref(product);
-                    }
-                  }}
-                >
+                  }
+                }}
+              >
                 <div className="product-card-glow" />
                 <div className="product-image-wrap">
                   <div className="product-badge-stack">

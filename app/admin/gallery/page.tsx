@@ -251,11 +251,12 @@ export default function GalleryPage() {
                           <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-white/[0.08] bg-slate-950">
                             {item.mediaType === 'youtube' && item.youtubeVideoId ? (
                               <>
-                                <img
+                                <Image
                                   src={`https://i.ytimg.com/vi/${item.youtubeVideoId}/hqdefault.jpg`}
                                   alt={item.title || 'Thumbnail video YouTube'}
-                                  loading="lazy"
-                                  className="h-full w-full object-cover"
+                                  fill
+                                  sizes="64px"
+                                  className="object-cover"
                                 />
 
                                 <div className="absolute inset-0 grid place-items-center bg-black/25">

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
-const INTRO_STORAGE_KEY = "katalog-mp-background-intro-v6";
+const INTRO_STORAGE_KEY = 'katalog-mp-background-intro-v6';
 
 export default function SiteBackground() {
   const reduceMotion = useReducedMotion();
@@ -14,25 +14,30 @@ export default function SiteBackground() {
     let hasPlayed = false;
 
     try {
-      hasPlayed = window.sessionStorage.getItem(INTRO_STORAGE_KEY) === "1";
+      hasPlayed = window.sessionStorage.getItem(INTRO_STORAGE_KEY) === '1';
+
       if (!hasPlayed) {
-        window.sessionStorage.setItem(INTRO_STORAGE_KEY, "1");
+        window.sessionStorage.setItem(INTRO_STORAGE_KEY, '1');
       }
     } catch {
       // Jika sessionStorage ditolak browser, animasi pembuka tetap aman.
     }
 
-    setPlayIntro(!hasPlayed && !reduceMotion);
-    setReady(true);
+    const frameId = window.requestAnimationFrame(() => {
+      setPlayIntro(!hasPlayed && !reduceMotion);
+      setReady(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
   }, [reduceMotion]);
 
   const pathInitial = playIntro ? { pathLength: 0, opacity: 0 } : false;
 
   return (
     <div
-      className={
-        "site-background site-background-v5" + (ready ? " is-ready" : "")
-      }
+      className={'site-background site-background-v5' + (ready ? ' is-ready' : '')}
       aria-hidden="true"
     >
       <div className="site-background-v5-grid" />
@@ -44,7 +49,7 @@ export default function SiteBackground() {
       {ready && (
         <div className="site-background-v5-mark-wrap">
           <motion.svg
-            key={playIntro ? "intro" : "static"}
+            key={playIntro ? 'intro' : 'static'}
             className="site-background-v5-mark"
             viewBox="0 0 1200 620"
             preserveAspectRatio="xMidYMid meet"

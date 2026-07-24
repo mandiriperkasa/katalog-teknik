@@ -519,9 +519,15 @@ export default function ProductsPage() {
       (item) => getProductDetailKey(item) === requestedDetailKey,
     );
 
-    if (requestedProduct) {
+    if (!requestedProduct) return;
+
+    const frameId = window.requestAnimationFrame(() => {
       setSelected(requestedProduct);
-    }
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
   }, [products]);
 
   useEffect(() => {
@@ -837,17 +843,17 @@ export default function ProductsPage() {
                       }}
                       whileHover={{ y: -9 }}
                       className="site-card product-card product-catalog-card product-card-clickable"
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Lihat detail ${product.name || 'Produk'}`}
-                  onClick={() => setSelected(product)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      setSelected(product);
-                    }
-                  }}
-                >
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Lihat detail ${product.name || 'Produk'}`}
+                      onClick={() => setSelected(product)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          setSelected(product);
+                        }
+                      }}
+                    >
                       <div className="product-card-ambient" />
                       <div className="product-image-wrap">
                         <div className="product-card-badges">
@@ -967,14 +973,14 @@ export default function ProductsPage() {
                           )}
                         </div>
                         <div className="product-card-actions product-card-actions-single">
-                    <Link
-                      href="/contact"
-                      className="site-button site-button-primary"
-                      onClick={(event) => event.stopPropagation()}
-                    >
+                          <Link
+                            href="/contact"
+                            className="site-button site-button-primary"
+                            onClick={(event) => event.stopPropagation()}
+                          >
                             {getContent('products_offer_button', 'Penawaran')}
                           </Link>
-                  </div>
+                        </div>
                       </div>
                     </motion.article>
                   ))}

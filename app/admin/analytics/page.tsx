@@ -730,7 +730,13 @@ function VisitAnalytics() {
   }, [days]);
 
   useEffect(() => {
-    void loadData();
+    const frameId = window.requestAnimationFrame(() => {
+      void loadData();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
   }, [loadData]);
 
   const maxDaily = useMemo(

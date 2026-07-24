@@ -101,7 +101,13 @@ export default function AccountsManager({ superAdminEmail }: { superAdminEmail: 
   }, []);
 
   useEffect(() => {
-    void loadAdmins();
+    const frameId = window.requestAnimationFrame(() => {
+      void loadAdmins();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
   }, [loadAdmins]);
 
   const resetForm = () => {

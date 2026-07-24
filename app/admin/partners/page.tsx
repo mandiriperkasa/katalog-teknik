@@ -73,7 +73,13 @@ export default function PartnersPage() {
   }, []);
 
   useEffect(() => {
-    void loadPartners();
+    const frameId = window.requestAnimationFrame(() => {
+      void loadPartners();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
   }, [loadPartners]);
 
   useEffect(() => {
