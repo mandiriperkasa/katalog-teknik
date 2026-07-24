@@ -5,17 +5,23 @@ import {
   ArrowRight,
   ArrowUpRight,
   BadgeCheck,
+  Building2,
   Boxes,
+  ClipboardList,
   Gauge,
   Headphones,
+  MessageCircleMore,
   PackageCheck,
+  Phone,
+  Send,
   ShieldCheck,
   Sparkles,
   Tag,
+  User,
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
 import { useSheetData } from '../hooks/useSheetData';
 import PartnerLogoStrip from './components/PartnerLogoStrip';
@@ -103,9 +109,23 @@ function getTopSellingProducts(products: ProductRow[]) {
     .slice(0, 10);
 }
 
+function normalizeWhatsAppNumber(value: string) {
+  const normalized = value.trim().replace(/[^\d+]/g, '');
+  if (normalized.startsWith('+')) return normalized.slice(1);
+  if (normalized.startsWith('0')) return `62${normalized.slice(1)}`;
+  return normalized.replace(/\D/g, '');
+}
+
 export default function Home() {
   const [wordIndex, setWordIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState('Semua');
+  const [quoteForm, setQuoteForm] = useState({
+    name: '',
+    company: '',
+    phone: '',
+    need: '',
+  });
+  const [quoteError, setQuoteError] = useState('');
   const {
     data: productRows,
     loading: productsLoading,
@@ -190,6 +210,40 @@ export default function Home() {
   const [loadedHeroImage, setLoadedHeroImage] = useState('');
 
   const heroImageReady = Boolean(heroBackgroundImage) && loadedHeroImage === heroBackgroundImage;
+
+  function handleQuickQuote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const name = quoteForm.name.trim();
+    const company = quoteForm.company.trim();
+    const phone = quoteForm.phone.trim();
+    const need = quoteForm.need.trim();
+    const phoneDigits = phone.replace(/\D/g, '');
+
+    if (!name || phoneDigits.length < 8 || !need) {
+      setQuoteError('Lengkapi nama, nomor WhatsApp yang valid, dan kebutuhan Anda.');
+      return;
+    }
+
+    const destination = normalizeWhatsAppNumber(
+      content.whatsapp_number?.trim() || content.footer_phone?.trim() || '+6285640100044',
+    );
+    const message = [
+      'Halo Mandiri Perkakas, saya ingin meminta penawaran cepat.',
+      '',
+      `Nama: ${name}`,
+      `Perusahaan: ${company || '-'}`,
+      `No. WhatsApp: ${phone}`,
+      `Kebutuhan: ${need}`,
+    ].join('\n');
+
+    setQuoteError('');
+    window.open(
+      `https://wa.me/${destination}?text=${encodeURIComponent(message)}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
+  }
 
   useEffect(() => {
     if (!heroBackgroundImage) {
@@ -373,6 +427,115 @@ export default function Home() {
               ))}
             </div>
           </motion.div>
+
+          <motion.aside
+            className="hero-quick-quote"
+            initial={{ opacity: 0, x: 28, scale: 0.97 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 0.85, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            aria-labelledby="quick-quote-title"
+          >
+            <span className="hero-quick-quote-orb" aria-hidden="true" />
+            <div className="hero-quick-quote-head">
+              <div>
+                <span className="hero-quick-quote-kicker">
+                  <Zap size={12} fill="currentColor" /> Jalur Cepat
+                </span>
+                <h2 id="quick-quote-title">Ceritakan kebutuhan Anda.</h2>
+                <p>Isi singkat, lalu lanjutkan percakapan langsung melalui WhatsApp.</p>
+              </div>
+              <span className="hero-quick-quote-icon" aria-hidden="true">
+                <MessageCircleMore size={21} />
+              </span>
+            </div>
+
+            <form className="hero-quick-quote-form" onSubmit={handleQuickQuote}>
+              <label>
+                <span>Nama</span>
+                <div className="hero-quick-quote-field">
+                  <User size={15} />
+                  <input
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Nama lengkap"
+                    value={quoteForm.name}
+                    onChange={(event) => {
+                      setQuoteForm((current) => ({ ...current, name: event.target.value }));
+                      setQuoteError('');
+                    }}
+                    required
+                  />
+                </div>
+              </label>
+
+              <label>
+                <span>
+                  Perusahaan <em>opsional</em>
+                </span>
+                <div className="hero-quick-quote-field">
+                  <Building2 size={15} />
+                  <input
+                    type="text"
+                    autoComplete="organization"
+                    placeholder="Nama usaha atau instansi"
+                    value={quoteForm.company}
+                    onChange={(event) =>
+                      setQuoteForm((current) => ({ ...current, company: event.target.value }))
+                    }
+                  />
+                </div>
+              </label>
+
+              <label>
+                <span>Nomor WhatsApp</span>
+                <div className="hero-quick-quote-field">
+                  <Phone size={15} />
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="Contoh: 0812 3456 7890"
+                    value={quoteForm.phone}
+                    onChange={(event) => {
+                      setQuoteForm((current) => ({ ...current, phone: event.target.value }));
+                      setQuoteError('');
+                    }}
+                    required
+                  />
+                </div>
+              </label>
+
+              <label>
+                <span>Kebutuhan peralatan</span>
+                <div className="hero-quick-quote-field is-textarea">
+                  <ClipboardList size={15} />
+                  <textarea
+                    placeholder="Tuliskan produk, jumlah, atau kebutuhan teknis..."
+                    value={quoteForm.need}
+                    onChange={(event) => {
+                      setQuoteForm((current) => ({ ...current, need: event.target.value }));
+                      setQuoteError('');
+                    }}
+                    required
+                  />
+                </div>
+              </label>
+
+              {quoteError && (
+                <p className="hero-quick-quote-error" role="alert">
+                  {quoteError}
+                </p>
+              )}
+
+              <button type="submit" className="hero-quick-quote-submit">
+                Kirim Permintaan <Send size={15} />
+              </button>
+
+              <p className="hero-quick-quote-note">
+                <ShieldCheck size={13} /> Data hanya digunakan untuk menyusun pesan WhatsApp.
+              </p>
+            </form>
+          </motion.aside>
         </div>
 
         <a

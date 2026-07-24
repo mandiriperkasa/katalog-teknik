@@ -1,0 +1,138 @@
+RINGKASAN PERUBAHAN WEBSITE KATALOG TEKNIK
+==========================================
+
+Berikut adalah ringkasan pembaruan yang telah dilakukan pada website.
+
+
+PERUBAHAN UTAMA
+---------------
+
+1. Katalog dan Detail Produk
+
+- Tampilan katalog produk telah dirapikan untuk desktop dan mobile.
+- Pencarian serta filter kategori, merek, harga, dan urutan produk telah
+  ditambahkan.
+- Setiap produk sekarang memiliki halaman detail tersendiri.
+- Halaman detail menampilkan foto, harga, rating, jumlah terjual, deskripsi,
+  spesifikasi, tombol WhatsApp, penawaran, marketplace, dan produk terkait.
+
+
+2. Tampilan Card Produk
+
+- Ukuran card produk dibuat lebih ringkas dan seragam.
+- Card pada beranda, katalog, dan Produk Terkait menggunakan desain yang sama.
+- Posisi tombol Penawaran telah disejajarkan.
+- Tampilan beranda desktop menggunakan lima produk per baris.
+
+
+3. Promo Produk
+
+- Produk dapat dipilih sebagai promo langsung dari dashboard admin.
+- Produk promo otomatis tampil pada bagian atas halaman katalog.
+- Jika promo lebih dari satu, produk ditampilkan sebagai slider otomatis.
+- Card promo telah didesain ulang agar lebih menarik dan responsif.
+
+
+4. Marketplace
+
+- Link Tokopedia dan TikTok Shop dapat diatur secara global.
+- Setiap produk juga dapat memiliki link Tokopedia dan TikTok Shop sendiri.
+- Jika link khusus produk belum diisi, tombol otomatis menggunakan link toko
+  global.
+
+
+5. Dashboard Admin
+
+- Admin dapat menambah, mengedit, dan menghapus produk.
+- Beberapa produk dapat dipilih dan dihapus sekaligus.
+- Rating produk dapat ditampilkan atau disembunyikan.
+- Produk dapat ditandai sebagai Terlaris atau Promo.
+- Admin dapat mengatur link Tokopedia dan TikTok Shop.
+- Pengelolaan media sosial telah ditambahkan untuk TikTok, Facebook, YouTube,
+  Instagram, Tokopedia, dan TikTok Shop.
+
+
+6. Tampilan Website
+
+- Website menggunakan mode terang sebagai tampilan awal.
+- Warna tulisan telah disesuaikan agar lebih mudah dibaca.
+- Jarak antar-section pada Beranda, Layanan, Tentang, Kontak, dan halaman
+  lainnya telah dirapikan.
+- Tampilan card dan section dibuat lebih ringkas.
+- Tampilan mobile telah disesuaikan agar nyaman digunakan melalui HP.
+
+
+7. Optimasi Gambar
+
+- Gambar dari Cloudinary dioptimalkan secara otomatis.
+- Browser dapat menerima format gambar yang lebih ringan seperti WebP atau AVIF.
+- Kualitas gambar disesuaikan otomatis agar website lebih ringan tanpa
+  mengurangi kualitas visual secara signifikan.
+
+
+CARA MENGAKSES
+--------------
+
+Website Pengunjung
+
+- Beranda:
+  /
+
+- Daftar produk:
+  /products
+
+- Detail produk:
+  Klik salah satu card produk pada Beranda, Katalog, atau Produk Terkait.
+
+- Layanan:
+  /services
+
+- Galeri:
+  /gallery
+
+- Tentang:
+  /about
+
+- Kontak:
+  /contact
+
+
+Dashboard Admin
+
+- Halaman login:
+  /admin-login
+
+- Dashboard:
+  /admin/dashboard
+
+- Pengelolaan produk:
+  /admin/products
+
+- Tambah produk:
+  /admin/products/add
+
+- Edit produk:
+  Buka /admin/products, kemudian klik tombol edit pada produk.
+
+- Mengatur promo:
+  Buka /admin/products, kemudian centang kolom Promo pada produk yang ingin
+  ditampilkan.
+
+- Mengatur link marketplace per produk:
+  Buka formulir tambah/edit produk, kemudian isi URL Tokopedia atau TikTok Shop.
+
+- Mengatur link toko dan media sosial global:
+  /admin/social-media
+
+- Pengaturan konten website:
+  /admin/settings
+
+- Galeri:
+  /admin/gallery
+
+- Analytics:
+  /admin/analytics
+
+
+
+
