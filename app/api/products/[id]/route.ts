@@ -23,6 +23,7 @@ type ProductPayload = {
   discountPrice?: number | null;
   soldCount?: number;
   rating?: number;
+  showRating?: boolean;
   imageUrl?: string;
   imagePublicId?: string | null;
   imageUrl2?: string | null;
@@ -31,7 +32,10 @@ type ProductPayload = {
   imagePublicId3?: string | null;
   imageUrl4?: string | null;
   imagePublicId4?: string | null;
+  tokopediaUrl?: string | null;
+  tiktokShopUrl?: string | null;
   isBestSeller?: boolean;
+  isPromotion?: boolean;
 };
 
 type ProductRecord = {
@@ -47,6 +51,7 @@ type ProductRecord = {
   discountPrice: number | null;
   soldCount: number | null;
   rating: number | null;
+  showRating: boolean;
   imageUrl: string | null;
   imagePublicId: string | null;
   imageUrl2: string | null;
@@ -55,7 +60,10 @@ type ProductRecord = {
   imagePublicId3: string | null;
   imageUrl4: string | null;
   imagePublicId4: string | null;
+  tokopediaUrl: string | null;
+  tiktokShopUrl: string | null;
   isBestSeller: boolean;
+  isPromotion: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -68,6 +76,18 @@ function parseProductId(id: string) {
 function normalizeOptionalText(value: unknown) {
   const normalized = String(value ?? '').trim();
   return normalized || null;
+}
+
+function normalizeOptionalWebUrl(value: unknown) {
+  const normalized = String(value ?? '').trim();
+  if (!normalized) return null;
+
+  try {
+    const url = new URL(normalized);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 async function destroyCloudinaryImages(publicIds: Array<string | null | undefined>) {
@@ -110,6 +130,7 @@ async function findProduct(productId: number) {
       discount_price AS "discountPrice",
       sold_count AS "soldCount",
       rating,
+      show_rating AS "showRating",
       image_url AS "imageUrl",
       image_public_id AS "imagePublicId",
       image_url_2 AS "imageUrl2",
@@ -118,7 +139,10 @@ async function findProduct(productId: number) {
       image_public_id_3 AS "imagePublicId3",
       image_url_4 AS "imageUrl4",
       image_public_id_4 AS "imagePublicId4",
+      tokopedia_url AS "tokopediaUrl",
+      tiktok_shop_url AS "tiktokShopUrl",
       is_best_seller AS "isBestSeller",
+      is_promotion AS "isPromotion",
       created_at AS "createdAt",
       updated_at AS "updatedAt"
     FROM products
@@ -191,6 +215,48 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   }
 }
 
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ message: 'Tidak memiliki akses.' }, { status: 401 });
+  }
+
+  const { id } = await context.params;
+  const productId = parseProductId(id);
+
+  if (!productId) {
+    return NextResponse.json({ message: 'ID produk tidak valid.' }, { status: 400 });
+  }
+
+  try {
+    const body = (await request.json()) as { isPromotion?: unknown };
+
+    if (typeof body.isPromotion !== 'boolean') {
+      return NextResponse.json({ message: 'Status promo tidak valid.' }, { status: 400 });
+    }
+
+    const sql = getDatabase();
+    const rows = (await sql`
+      UPDATE products
+      SET
+        is_promotion = ${body.isPromotion},
+        updated_at = NOW()
+      WHERE id = ${productId}
+      RETURNING
+        id,
+        is_promotion AS "isPromotion"
+    `) as unknown as Array<{ id: number; isPromotion: boolean }>;
+
+    if (!rows[0]) {
+      return NextResponse.json({ message: 'Produk tidak ditemukan.' }, { status: 404 });
+    }
+
+    return NextResponse.json(rows[0]);
+  } catch (error) {
+    console.error('Gagal mengubah status promo produk:', error);
+    return NextResponse.json({ message: 'Gagal mengubah status promo.' }, { status: 500 });
+  }
+}
+
 export async function PUT(request: NextRequest, context: RouteContext) {
   if (!(await isAdminAuthenticated())) {
     return NextResponse.json({ message: 'Tidak memiliki akses.' }, { status: 401 });
@@ -236,6 +302,17 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       }
     }
 
+    const tokopediaUrl = normalizeOptionalWebUrl(body.tokopediaUrl);
+    const tiktokShopUrl = normalizeOptionalWebUrl(body.tiktokShopUrl);
+
+    if (String(body.tokopediaUrl ?? '').trim() && !tokopediaUrl) {
+      return NextResponse.json({ message: 'URL Tokopedia tidak valid.' }, { status: 400 });
+    }
+
+    if (String(body.tiktokShopUrl ?? '').trim() && !tiktokShopUrl) {
+      return NextResponse.json({ message: 'URL TikTok Shop tidak valid.' }, { status: 400 });
+    }
+
     const nextPublicIds = [
       normalizeOptionalText(body.imagePublicId),
       normalizeOptionalText(body.imagePublicId2),
@@ -265,6 +342,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         discount_price = ${normalizedDiscountPrice},
         sold_count = ${Math.max(0, Math.floor(Number(body.soldCount) || 0))},
         rating = ${rating},
+        show_rating = ${body.showRating !== false},
         image_url = ${String(body.imageUrl ?? '').trim()},
         image_public_id = ${nextPublicIds[0]},
         image_url_2 = ${normalizeOptionalText(body.imageUrl2)},
@@ -273,13 +351,16 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         image_public_id_3 = ${nextPublicIds[2]},
         image_url_4 = ${normalizeOptionalText(body.imageUrl4)},
         image_public_id_4 = ${nextPublicIds[3]},
+        tokopedia_url = ${tokopediaUrl},
+        tiktok_shop_url = ${tiktokShopUrl},
         is_best_seller = ${Boolean(body.isBestSeller)},
+        is_promotion = ${Boolean(body.isPromotion)},
         updated_at = NOW()
       WHERE id = ${productId}
     `;
 
-    const idsToDelete = oldPublicIds.filter(
-      (oldId): oldId is string => Boolean(oldId && !nextPublicIds.includes(oldId)),
+    const idsToDelete = oldPublicIds.filter((oldId): oldId is string =>
+      Boolean(oldId && !nextPublicIds.includes(oldId)),
     );
 
     await destroyCloudinaryImages(idsToDelete);

@@ -1,0 +1,3 @@
+ALTER TABLE products
+ADD COLUMN IF NOT EXISTS tokopedia_url TEXT,
+ADD COLUMN IF NOT EXISTS tiktok_shop_url TEXT;

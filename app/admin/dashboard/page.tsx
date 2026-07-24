@@ -113,7 +113,14 @@ export default function DashboardPage() {
   const products = productData as ProductRow[];
   const settings = settingData as SettingRow[];
   const bestSellerCount = products.filter((item) => isTruthy(item.isBestSeller)).length;
-  const socialKeys = new Set(['link_tiktok', 'link_fb', 'link_youtube', 'link_instagram']);
+  const socialKeys = new Set([
+    'link_tiktok',
+    'link_fb',
+    'link_youtube',
+    'link_instagram',
+    'link_tokopedia',
+    'link_tiktok_shop',
+  ]);
   const activeSocialCount = settings.filter(
     (item) => item.key && socialKeys.has(item.key) && item.value?.trim(),
   ).length;
@@ -145,7 +152,7 @@ export default function DashboardPage() {
     },
     {
       label: 'Sosial Media Aktif',
-      value: settingsLoading ? '—' : `${activeSocialCount}/4`,
+      value: settingsLoading ? '—' : `${activeSocialCount}/${socialKeys.size}`,
       detail: 'Tautan footer terisi',
       icon: Share2,
       accent: 'from-cyan-500/20 to-cyan-300/[0.04]',

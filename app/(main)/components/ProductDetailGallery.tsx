@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight, Wrench } from 'lucide-react';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 
+import { getOptimizedCloudinaryUrl, isCloudinaryUrl } from '@/lib/cloudinary-image';
+
 type ProductDetailGalleryProps = {
   name: string;
   imageUrl?: string | null;
@@ -60,10 +62,11 @@ export default function ProductDetailGallery({
       <div className="group relative aspect-square w-full overflow-hidden rounded-3xl border border-[var(--border-color)] bg-[var(--surface-soft)]">
         <Image
           key={activeImage}
-          src={activeImage}
+          src={getOptimizedCloudinaryUrl(activeImage, { width: 1200 })}
           alt={`${name} - foto ${safeIndex + 1}`}
           fill
           priority
+          unoptimized={isCloudinaryUrl(activeImage)}
           sizes="(max-width: 900px) 100vw, 50vw"
           className="object-contain p-4 transition duration-300 group-hover:scale-[1.02]"
         />
@@ -111,9 +114,10 @@ export default function ProductDetailGallery({
               aria-label={`Tampilkan foto ${index + 1}`}
             >
               <Image
-                src={image}
+                src={getOptimizedCloudinaryUrl(image, { width: 240 })}
                 alt=""
                 fill
+                unoptimized={isCloudinaryUrl(image)}
                 sizes="120px"
                 className="object-cover"
               />

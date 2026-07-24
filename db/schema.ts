@@ -1,12 +1,4 @@
-import {
-  bigint,
-  boolean,
-  integer,
-  pgTable,
-  serial,
-  text,
-  timestamp,
-} from 'drizzle-orm/pg-core';
+import { bigint, boolean, integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
@@ -21,6 +13,7 @@ export const products = pgTable('products', {
   discountPrice: bigint('discount_price', { mode: 'number' }),
   soldCount: bigint('sold_count', { mode: 'number' }).notNull().default(0),
   rating: integer('rating'),
+  showRating: boolean('show_rating').notNull().default(true),
 
   // Foto utama untuk card serta foto pertama pada galeri detail.
   imageUrl: text('image_url').notNull(),
@@ -34,9 +27,29 @@ export const products = pgTable('products', {
   imageUrl4: text('image_url_4'),
   imagePublicId4: text('image_public_id_4'),
 
+  tokopediaUrl: text('tokopedia_url'),
+  tiktokShopUrl: text('tiktok_shop_url'),
   isBestSeller: boolean('is_best_seller').notNull().default(false),
+  isPromotion: boolean('is_promotion').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const productPromotions = pgTable('product_promotions', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id')
+    .notNull()
+    .references(() => products.id, { onDelete: 'cascade' }),
+  imageUrl: text('image_url').notNull(),
+  imagePublicId: text('image_public_id').notNull(),
+  mobileImageUrl: text('mobile_image_url'),
+  mobileImagePublicId: text('mobile_image_public_id'),
+  isActive: boolean('is_active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  startsAt: timestamp('starts_at', { withTimezone: true }),
+  endsAt: timestamp('ends_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const admins = pgTable('admins', {
@@ -52,5 +65,7 @@ export const admins = pgTable('admins', {
 
 export type ProductRow = typeof products.$inferSelect;
 export type NewProductRow = typeof products.$inferInsert;
+export type ProductPromotionRow = typeof productPromotions.$inferSelect;
+export type NewProductPromotionRow = typeof productPromotions.$inferInsert;
 export type AdminRow = typeof admins.$inferSelect;
 export type NewAdminRow = typeof admins.$inferInsert;

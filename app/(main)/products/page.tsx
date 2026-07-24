@@ -2,50 +2,31 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  ArrowRight,
+  ArrowUpDown,
   Boxes,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   FolderTree,
   Layers3,
   ListFilter,
   PackageOpen,
-  PanelLeftOpen,
   RotateCcw,
   Search,
   Sparkles,
   Star,
   Tag,
-  Wrench,
   X,
 } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useSheetData } from '../../hooks/useSheetData';
 import PageHero from '../components/PageHero';
-import ProductDetailGallery from '../components/ProductDetailGallery';
-
-type ProductRow = {
-  id?: number;
-  legacyNo?: number | null;
-  name?: string | null;
-  mainCategory?: string | null;
-  secondCategory?: string | null;
-  subCategory?: string | null;
-  price?: number | string | null;
-  description?: string | null;
-  hasDiscount?: boolean | string | null;
-  discountPrice?: number | string | null;
-  soldCount?: number | string | null;
-  rating?: number | string | null;
-  imageUrl?: string | null;
-  imageUrl2?: string | null;
-  imageUrl3?: string | null;
-  imageUrl4?: string | null;
-  isBestSeller?: boolean | null;
-};
+import ProductCard from '../components/ProductCard';
+import ProductPromotionSlider, {
+  type ProductPromotion,
+} from '../components/ProductPromotionSlider';
+import { cleanCategory, getNumericPrice, isTruthy, type ProductRow } from './product';
 
 type SettingRow = {
   key: string;
@@ -69,6 +50,14 @@ type MainCategoryNode = {
   children: SecondCategoryNode[];
 };
 
+type BrandOption = {
+  name: string;
+  count: number;
+};
+
+type ProductSort =
+  'newest' | 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc' | 'best-selling' | 'rating';
+
 type CategorySidebarProps = {
   tree: MainCategoryNode[];
   totalCount: number;
@@ -83,6 +72,19 @@ type CategorySidebarProps = {
   onSelectSub: (main: string, second: string, sub: string) => void;
   onToggleMain: (name: string) => void;
   onToggleSecond: (main: string, second: string) => void;
+  brands: BrandOption[];
+  selectedBrand: string;
+  onSelectBrand: (name: string) => void;
+  minimumPrice: number | null;
+  maximumPrice: number | null;
+  minimumPriceDraft: string;
+  maximumPriceDraft: string;
+  onMinimumPriceDraftChange: (value: string) => void;
+  onMaximumPriceDraftChange: (value: string) => void;
+  onApplyPrice: () => void;
+  onClearMinimumPrice: () => void;
+  onClearMaximumPrice: () => void;
+  onResetPrice: () => void;
   getContent: (key: string, fallback: string) => string;
   onClose?: () => void;
 };
@@ -147,65 +149,41 @@ const fallbackProducts: ProductRow[] = [
   },
 ];
 
-function formatCurrency(value?: string | number | null, contactLabel = 'Hubungi kami') {
-  const number = Number(String(value ?? '').replace(/[^0-9.-]/g, ''));
-  if (!Number.isFinite(number)) return value || contactLabel;
+const productSortOptions: Array<{ value: ProductSort; label: string }> = [
+  { value: 'newest', label: 'Terbaru' },
+  { value: 'name-asc', label: 'Nama A–Z' },
+  { value: 'name-desc', label: 'Nama Z–A' },
+  { value: 'price-asc', label: 'Harga Terendah' },
+  { value: 'price-desc', label: 'Harga Tertinggi' },
+  { value: 'best-selling', label: 'Terlaris' },
+  { value: 'rating', label: 'Rating Tertinggi' },
+];
 
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(number);
-}
+function getEffectivePrice(product: ProductRow) {
+  const originalPrice = getNumericPrice(product.price);
+  const discountPrice = getNumericPrice(product.discountPrice);
 
-function getNumericPrice(value?: number | string | null) {
-  return Number(value) || 0;
-}
-
-function getDiscountPercent(
-  price?: number | string | null,
-  discountPrice?: number | string | null,
-) {
-  const originalPrice = getNumericPrice(price);
-  const finalPrice = getNumericPrice(discountPrice);
-
-  if (originalPrice <= 0 || finalPrice <= 0 || finalPrice >= originalPrice) {
-    return 0;
+  if (isTruthy(product.hasDiscount) && discountPrice > 0 && discountPrice < originalPrice) {
+    return discountPrice;
   }
 
-  return Math.round(((originalPrice - finalPrice) / originalPrice) * 100);
+  return originalPrice;
 }
 
-function formatSoldCount(value?: number | string | null, soldLabel = 'terjual') {
-  const soldCount = Math.max(0, Math.floor(Number(value) || 0));
+function formatPriceInput(value: string) {
+  const digits = value.replace(/\D/g, '');
+  if (!digits) return '';
 
-  if (soldCount >= 1_000_000) {
-    const formatted = (soldCount / 1_000_000).toFixed(1).replace('.0', '').replace('.', ',');
-
-    return `${formatted}JT+ ${soldLabel}`;
-  }
-
-  if (soldCount >= 1_000) {
-    const formatted = (soldCount / 1_000).toFixed(1).replace('.0', '').replace('.', ',');
-
-    return `${formatted}RB+ ${soldLabel}`;
-  }
-
-  return `${soldCount.toLocaleString('id-ID')} ${soldLabel}`;
+  return Number(digits).toLocaleString('id-ID');
 }
 
-function isTruthy(value?: boolean | string | null) {
-  if (typeof value === 'boolean') return value;
-
-  return ['true', '1', 'yes', 'ya'].includes(
-    String(value ?? '')
+function getProductBrand(product: ProductRow) {
+  return (
+    String(product.name ?? '')
       .trim()
-      .toLowerCase(),
+      .split(/\s+/)[0]
+      ?.replace(/^[^a-z0-9]+|[^a-z0-9-]+$/gi, '') || 'Lainnya'
   );
-}
-
-function cleanCategory(value?: string | null, fallback = 'Lainnya') {
-  return value?.trim() || fallback;
 }
 
 function buildCategoryTree(products: ProductRow[]): MainCategoryNode[] {
@@ -262,6 +240,19 @@ function CategorySidebar({
   onSelectSub,
   onToggleMain,
   onToggleSecond,
+  brands,
+  selectedBrand,
+  onSelectBrand,
+  minimumPrice,
+  maximumPrice,
+  minimumPriceDraft,
+  maximumPriceDraft,
+  onMinimumPriceDraftChange,
+  onMaximumPriceDraftChange,
+  onApplyPrice,
+  onClearMinimumPrice,
+  onClearMaximumPrice,
+  onResetPrice,
   getContent,
   onClose,
 }: CategorySidebarProps) {
@@ -465,6 +456,107 @@ function CategorySidebar({
         })}
       </div>
 
+      <div className="category-brand-filter">
+        <div className="category-brand-filter-head">
+          <strong>Merek</strong>
+          <small>{brands.length} merek tersedia</small>
+        </div>
+
+        <div className="category-brand-list">
+          <button
+            type="button"
+            className={selectedBrand === 'Semua' ? 'is-active' : ''}
+            onClick={() => onSelectBrand('Semua')}
+          >
+            <span>Semua Merek</span>
+            <span className="category-count">{totalCount}</span>
+            {selectedBrand === 'Semua' && <Check size={13} />}
+          </button>
+
+          {brands.map((brand) => (
+            <button
+              type="button"
+              key={brand.name}
+              className={selectedBrand === brand.name ? 'is-active' : ''}
+              onClick={() => onSelectBrand(brand.name)}
+            >
+              <span>{brand.name}</span>
+              <span className="category-count">{brand.count}</span>
+              {selectedBrand === brand.name && <Check size={13} />}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="category-price-filter">
+        <div className="category-price-filter-head">
+          <span>
+            <ArrowUpDown size={14} />
+          </span>
+          <div>
+            <strong>Rentang Harga</strong>
+            <small>Sesuaikan anggaran produk</small>
+          </div>
+        </div>
+
+        <div className="category-price-input-grid">
+          <label>
+            <span>Min</span>
+            <div className="category-price-input">
+              <small>Rp</small>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                value={formatPriceInput(minimumPriceDraft)}
+                onChange={(event) =>
+                  onMinimumPriceDraftChange(event.target.value.replace(/\D/g, ''))
+                }
+                aria-label="Harga minimum sidebar"
+              />
+            </div>
+          </label>
+          <label>
+            <span>Max</span>
+            <div className="category-price-input">
+              <small>Rp</small>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Max"
+                value={formatPriceInput(maximumPriceDraft)}
+                onChange={(event) =>
+                  onMaximumPriceDraftChange(event.target.value.replace(/\D/g, ''))
+                }
+                aria-label="Harga maksimum sidebar"
+              />
+            </div>
+          </label>
+        </div>
+
+        <button type="button" className="category-price-apply" onClick={onApplyPrice}>
+          Terapkan
+        </button>
+
+        {(minimumPrice !== null || maximumPrice !== null) && (
+          <div className="category-price-active">
+            {minimumPrice !== null && (
+              <button type="button" onClick={onClearMinimumPrice} aria-label="Hapus harga minimum">
+                Min: Rp {minimumPrice.toLocaleString('id-ID')} <X size={11} />
+              </button>
+            )}
+            {maximumPrice !== null && (
+              <button type="button" onClick={onClearMaximumPrice} aria-label="Hapus harga maksimum">
+                Max: Rp {maximumPrice.toLocaleString('id-ID')} <X size={11} />
+              </button>
+            )}
+            <button type="button" className="category-price-reset" onClick={onResetPrice}>
+              Reset harga
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="category-panel-foot">
         <Sparkles size={15} />
         <span>
@@ -476,10 +568,6 @@ function CategorySidebar({
       </div>
     </div>
   );
-}
-
-function getProductDetailKey(product: ProductRow) {
-  return String(product.id ?? product.legacyNo ?? product.name ?? '');
 }
 
 export default function ProductsPage() {
@@ -500,58 +588,129 @@ export default function ProductsPage() {
 
   const products = data.length > 0 ? data : fallbackProducts;
   const [search, setSearch] = useState('');
+  const [searchDraft, setSearchDraft] = useState('');
   const [selectedMain, setSelectedMain] = useState('Semua');
   const [selectedSecond, setSelectedSecond] = useState('');
   const [selectedSub, setSelectedSub] = useState('');
   const [expandedMain, setExpandedMain] = useState<Set<string>>(new Set());
   const [expandedSecond, setExpandedSecond] = useState<Set<string>>(new Set());
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [selected, setSelected] = useState<ProductRow | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
-
-  useEffect(() => {
-    const requestedDetailKey = new URLSearchParams(window.location.search).get('detail');
-
-    if (!requestedDetailKey || products.length === 0) return;
-
-    const requestedProduct = products.find(
-      (item) => getProductDetailKey(item) === requestedDetailKey,
-    );
-
-    if (!requestedProduct) return;
-
-    const frameId = window.requestAnimationFrame(() => {
-      setSelected(requestedProduct);
-    });
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }, [products]);
+  const [sort, setSort] = useState<ProductSort>('newest');
+  const [selectedBrand, setSelectedBrand] = useState('Semua');
+  const [minimumPrice, setMinimumPrice] = useState<number | null>(null);
+  const [maximumPrice, setMaximumPrice] = useState<number | null>(null);
+  const [minimumPriceDraft, setMinimumPriceDraft] = useState('');
+  const [maximumPriceDraft, setMaximumPriceDraft] = useState('');
+  const [pricePanelOpen, setPricePanelOpen] = useState(false);
+  const [promotions, setPromotions] = useState<ProductPromotion[]>([]);
 
   useEffect(() => {
     void refresh();
     void refreshSettings();
   }, [refresh, refreshSettings]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadPromotions() {
+      try {
+        const response = await fetch('/api/promotions', {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const result = await response.json();
+
+        if (response.ok && Array.isArray(result)) {
+          setPromotions(result as ProductPromotion[]);
+        }
+      } catch (promotionError) {
+        if (promotionError instanceof DOMException && promotionError.name === 'AbortError') return;
+        console.warn('Promo produk belum dapat dimuat.', promotionError);
+      }
+    }
+
+    void loadPromotions();
+    return () => controller.abort();
+  }, []);
+
   const categoryTree = useMemo(() => buildCategoryTree(products), [products]);
+  const brandOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    products.forEach((product) => {
+      const brand = getProductBrand(product);
+      counts.set(brand, (counts.get(brand) ?? 0) + 1);
+    });
+
+    return Array.from(counts, ([name, count]) => ({ name, count })).sort((left, right) =>
+      left.name.localeCompare(right.name, 'id'),
+    );
+  }, [products]);
+  const productBrands = brandOptions.map((brand) => brand.name);
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();
 
-    return products.filter((product) => {
+    const matches = products.filter((product) => {
       const main = cleanCategory(product.mainCategory);
       const second = cleanCategory(product.secondCategory);
       const sub = cleanCategory(product.subCategory);
       const mainMatch = selectedMain === 'Semua' || main === selectedMain;
       const secondMatch = !selectedSecond || second === selectedSecond;
       const subMatch = !selectedSub || sub === selectedSub;
-      const searchable = [product.name, main, second, sub].filter(Boolean).join(' ').toLowerCase();
+      const brand = getProductBrand(product);
+      const brandMatch = selectedBrand === 'Semua' || brand === selectedBrand;
+      const price = getEffectivePrice(product);
+      const priceMatch =
+        (minimumPrice === null || price >= minimumPrice) &&
+        (maximumPrice === null || price <= maximumPrice);
+      const searchable = [product.name, brand, main, second, sub]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
 
-      return mainMatch && secondMatch && subMatch && (!keyword || searchable.includes(keyword));
+      return (
+        mainMatch &&
+        secondMatch &&
+        subMatch &&
+        brandMatch &&
+        priceMatch &&
+        (!keyword || searchable.includes(keyword))
+      );
     });
-  }, [products, search, selectedMain, selectedSecond, selectedSub]);
+
+    return [...matches].sort((left, right) => {
+      switch (sort) {
+        case 'name-asc':
+          return String(left.name ?? '').localeCompare(String(right.name ?? ''), 'id');
+        case 'name-desc':
+          return String(right.name ?? '').localeCompare(String(left.name ?? ''), 'id');
+        case 'price-asc':
+          return getEffectivePrice(left) - getEffectivePrice(right);
+        case 'price-desc':
+          return getEffectivePrice(right) - getEffectivePrice(left);
+        case 'best-selling':
+          return getNumericPrice(right.soldCount) - getNumericPrice(left.soldCount);
+        case 'rating':
+          return getNumericPrice(right.rating) - getNumericPrice(left.rating);
+        default:
+          return (
+            getNumericPrice(right.id ?? right.legacyNo) - getNumericPrice(left.id ?? left.legacyNo)
+          );
+      }
+    });
+  }, [
+    products,
+    search,
+    selectedMain,
+    selectedSecond,
+    selectedSub,
+    selectedBrand,
+    minimumPrice,
+    maximumPrice,
+    sort,
+  ]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -572,6 +731,7 @@ export default function ProductsPage() {
       : selectedMain,
     selectedSecond,
     selectedSub,
+    selectedBrand !== 'Semua' ? selectedBrand : '',
   ].filter(Boolean);
 
   const selectAll = () => {
@@ -628,7 +788,50 @@ export default function ProductsPage() {
 
   const resetFilters = () => {
     setSearch('');
+    setSearchDraft('');
+    setSelectedBrand('Semua');
+    setMinimumPrice(null);
+    setMaximumPrice(null);
+    setMinimumPriceDraft('');
+    setMaximumPriceDraft('');
+    setPricePanelOpen(false);
     selectAll();
+  };
+
+  const applyPriceFilter = () => {
+    let nextMinimum = minimumPriceDraft ? Number(minimumPriceDraft) : null;
+    let nextMaximum = maximumPriceDraft ? Number(maximumPriceDraft) : null;
+
+    if (nextMinimum !== null && nextMaximum !== null && nextMinimum > nextMaximum) {
+      [nextMinimum, nextMaximum] = [nextMaximum, nextMinimum];
+      setMinimumPriceDraft(String(nextMinimum));
+      setMaximumPriceDraft(String(nextMaximum));
+    }
+
+    setMinimumPrice(nextMinimum);
+    setMaximumPrice(nextMaximum);
+    setCurrentPage(1);
+    setPricePanelOpen(false);
+  };
+
+  const clearMinimumPrice = () => {
+    setMinimumPrice(null);
+    setMinimumPriceDraft('');
+    setCurrentPage(1);
+  };
+
+  const clearMaximumPrice = () => {
+    setMaximumPrice(null);
+    setMaximumPriceDraft('');
+    setCurrentPage(1);
+  };
+
+  const resetPriceFilter = () => {
+    setMinimumPrice(null);
+    setMaximumPrice(null);
+    setMinimumPriceDraft('');
+    setMaximumPriceDraft('');
+    setCurrentPage(1);
   };
 
   const sidebarProps: CategorySidebarProps = {
@@ -645,11 +848,27 @@ export default function ProductsPage() {
     onSelectSub: selectSub,
     onToggleMain: toggleMain,
     onToggleSecond: toggleSecond,
+    brands: brandOptions,
+    selectedBrand,
+    onSelectBrand: (name) => {
+      setSelectedBrand(name);
+      setCurrentPage(1);
+    },
+    minimumPrice,
+    maximumPrice,
+    minimumPriceDraft,
+    maximumPriceDraft,
+    onMinimumPriceDraftChange: setMinimumPriceDraft,
+    onMaximumPriceDraftChange: setMaximumPriceDraft,
+    onApplyPrice: applyPriceFilter,
+    onClearMinimumPrice: clearMinimumPrice,
+    onClearMaximumPrice: clearMaximumPrice,
+    onResetPrice: resetPriceFilter,
     getContent,
   };
 
   return (
-    <main>
+    <main className="product-listing-page">
       <PageHero
         eyebrow={getContent('products_hero_eyebrow', 'Katalog Produk')}
         title={
@@ -664,6 +883,9 @@ export default function ProductsPage() {
           'products_hero_description',
           'Temukan produk teknik sesuai kebutuhan melalui kategori yang tersusun rapi dan mudah dijelajahi.',
         )}
+        aside={
+          promotions.length > 0 ? <ProductPromotionSlider promotions={promotions} /> : undefined
+        }
       >
         <div className="mt-8 flex flex-wrap gap-3">
           <span className="site-chip">
@@ -684,7 +906,18 @@ export default function ProductsPage() {
         </div>
       </PageHero>
 
-      <section className="section-shell pb-28">
+      <section className="section-shell products-catalog-section pb-28">
+        <div className="product-mobile-catalog-head">
+          <h1>Katalog Produk Lengkap</h1>
+          <p>{filtered.length} Barang ditemukan</p>
+        </div>
+
+        {promotions.length > 0 && (
+          <div className="product-mobile-promotion">
+            <ProductPromotionSlider promotions={promotions} />
+          </div>
+        )}
+
         <div className="product-catalog-layout">
           <aside
             className="product-category-sidebar site-card"
@@ -696,48 +929,220 @@ export default function ProductsPage() {
 
           <div className="product-catalog-content">
             <div className="product-page-toolbar" data-aos="fade-up">
-              <button
-                type="button"
-                className="product-mobile-filter-trigger"
-                onClick={() => setMobileFiltersOpen(true)}
+              <form
+                className="product-search"
+                role="search"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  setSearch(searchDraft.trim());
+                  setCurrentPage(1);
+                }}
               >
-                <PanelLeftOpen size={18} />
-
-                {getContent('products_filter_button', 'Kategori')}
-              </button>
-
-              <div className="product-search">
                 <Search size={18} />
 
                 <input
                   type="search"
                   className="site-input"
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    setCurrentPage(1);
-                  }}
+                  value={searchDraft}
+                  onChange={(event) => setSearchDraft(event.target.value)}
                   placeholder={getContent(
                     'products_search_placeholder',
-                    'Cari nama, kategori, atau tipe produk...',
+                    'Cari produk atau kode SKU...',
                   )}
                 />
-                {search && (
+                {(searchDraft || search) && (
                   <button
                     type="button"
                     onClick={() => {
                       setSearch('');
+                      setSearchDraft('');
                       setCurrentPage(1);
                     }}
                     aria-label={getContent('products_clear_search_label', 'Hapus pencarian')}
-                    className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-xl text-(--text-muted) hover:bg-(--surface-hover)"
+                    className="product-search-clear absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-xl text-(--text-muted) hover:bg-(--surface-hover)"
                   >
                     <X size={17} />
                   </button>
                 )}
+                <button type="submit" className="product-search-submit">
+                  Cari
+                </button>
+              </form>
+
+              <div className="product-mobile-controls">
+                <label className="product-mobile-facet">
+                  <span className="sr-only">Pilih kategori</span>
+                  <select
+                    value={selectedMain}
+                    onChange={(event) => {
+                      if (event.target.value === 'Semua') selectAll();
+                      else selectMain(event.target.value);
+                    }}
+                    aria-label="Pilih kategori"
+                  >
+                    <option value="Semua">Kategori</option>
+                    {categoryTree.map((category) => (
+                      <option key={category.name} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="product-mobile-facet">
+                  <span className="sr-only">Pilih merek</span>
+                  <select
+                    value={selectedBrand}
+                    onChange={(event) => {
+                      setSelectedBrand(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                    aria-label="Pilih merek"
+                  >
+                    <option value="Semua">Merek</option>
+                    {productBrands.map((brand) => (
+                      <option key={brand} value={brand}>
+                        {brand}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  className={`product-mobile-facet product-price-trigger ${
+                    minimumPrice !== null || maximumPrice !== null ? 'is-active' : ''
+                  }`}
+                  aria-expanded={pricePanelOpen}
+                  onClick={() => setPricePanelOpen((current) => !current)}
+                >
+                  <span>
+                    {minimumPrice !== null || maximumPrice !== null ? 'Harga...' : 'Harga'}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className={pricePanelOpen ? 'rotate-180' : ''}
+                    aria-hidden="true"
+                  />
+                </button>
+
+                <label className="product-mobile-facet">
+                  <span className="sr-only">Urutkan produk</span>
+                  <select
+                    value={sort}
+                    onChange={(event) => {
+                      setSort(event.target.value as ProductSort);
+                      setCurrentPage(1);
+                    }}
+                    aria-label="Urutkan produk"
+                  >
+                    {productSortOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
 
+              {pricePanelOpen && (
+                <div className="product-mobile-price-panel">
+                  <div className="product-price-input-grid">
+                    <label>
+                      <span>Min</span>
+                      <div className="product-price-input">
+                        <small>Rp</small>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="0"
+                          value={formatPriceInput(minimumPriceDraft)}
+                          onChange={(event) =>
+                            setMinimumPriceDraft(event.target.value.replace(/\D/g, ''))
+                          }
+                          aria-label="Harga minimum"
+                        />
+                      </div>
+                    </label>
+
+                    <label>
+                      <span>Max</span>
+                      <div className="product-price-input">
+                        <small>Rp</small>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="Max"
+                          value={formatPriceInput(maximumPriceDraft)}
+                          onChange={(event) =>
+                            setMaximumPriceDraft(event.target.value.replace(/\D/g, ''))
+                          }
+                          aria-label="Harga maksimum"
+                        />
+                      </div>
+                    </label>
+                  </div>
+
+                  <button type="button" className="product-price-apply" onClick={applyPriceFilter}>
+                    Terapkan
+                  </button>
+                </div>
+              )}
+
+              {(minimumPrice !== null || maximumPrice !== null) && (
+                <div className="product-mobile-active-filters">
+                  {minimumPrice !== null && (
+                    <button
+                      type="button"
+                      className="product-price-filter-chip"
+                      onClick={clearMinimumPrice}
+                      aria-label="Hapus harga minimum"
+                    >
+                      Min: Rp {minimumPrice.toLocaleString('id-ID')} <X size={12} />
+                    </button>
+                  )}
+
+                  {maximumPrice !== null && (
+                    <button
+                      type="button"
+                      className="product-price-filter-chip"
+                      onClick={clearMaximumPrice}
+                      aria-label="Hapus harga maksimum"
+                    >
+                      Max: Rp {maximumPrice.toLocaleString('id-ID')} <X size={12} />
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    className="product-price-filter-reset"
+                    onClick={resetPriceFilter}
+                  >
+                    Reset Filter
+                  </button>
+                </div>
+              )}
+
               <div className="product-toolbar-actions">
+                <label className="product-sort product-sort-desktop">
+                  <ArrowUpDown size={15} />
+                  <span>{getContent('products_sort_label', 'Urutkan')}</span>
+                  <select
+                    value={sort}
+                    onChange={(event) => {
+                      setSort(event.target.value as ProductSort);
+                      setCurrentPage(1);
+                    }}
+                    aria-label="Urutkan produk"
+                  >
+                    {productSortOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
                 <label className="product-page-size">
                   <span>{getContent('products_show_label', 'Tampilkan')}</span>
                   <select
@@ -775,7 +1180,11 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              {(selectedMain !== 'Semua' || search) && (
+              {(selectedMain !== 'Semua' ||
+                selectedBrand !== 'Semua' ||
+                minimumPrice !== null ||
+                maximumPrice !== null ||
+                search) && (
                 <button type="button" className="product-reset-button" onClick={resetFilters}>
                   <RotateCcw size={14} />
 
@@ -830,159 +1239,13 @@ export default function ProductsPage() {
               <motion.div layout className="product-grid product-catalog-grid">
                 <AnimatePresence mode="popLayout">
                   {visibleProducts.map((product, index) => (
-                    <motion.article
-                      layout
+                    <ProductCard
                       key={`${product.legacyNo ?? index}-${product.name ?? 'produk'}`}
-                      initial={{ opacity: 0, scale: 0.94, y: 24 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.92, y: 14 }}
-                      transition={{
-                        duration: 0.42,
-                        delay: Math.min(index * 0.045, 0.24),
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                      whileHover={{ y: -9 }}
-                      className="site-card product-card product-catalog-card product-card-clickable"
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Lihat detail ${product.name || 'Produk'}`}
-                      onClick={() => setSelected(product)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          setSelected(product);
-                        }
-                      }}
-                    >
-                      <div className="product-card-ambient" />
-                      <div className="product-image-wrap">
-                        <div className="product-card-badges">
-                          {isTruthy(product.isBestSeller) && (
-                            <span className="site-chip product-badge product-best-badge">
-                              {getContent('products_best_seller_badge', 'Terlaris')}
-                            </span>
-                          )}
-                          <span className="site-chip product-badge product-main-badge">
-                            {cleanCategory(product.mainCategory)}
-                          </span>
-                        </div>
-                        {product.imageUrl ? (
-                          <Image
-                            src={product.imageUrl}
-                            alt={
-                              product.name ||
-                              getContent('products_product_image_alt', 'Produk teknik')
-                            }
-                            fill
-                            sizes="(max-width: 760px) 100vw, (max-width: 1040px) 50vw, 34vw"
-                            loading={index === 0 ? 'eager' : 'lazy'}
-                            fetchPriority={index === 0 ? 'high' : 'auto'}
-                            className="product-image"
-                          />
-                        ) : (
-                          <div className="product-image-placeholder">
-                            <Wrench size={48} strokeWidth={1.2} />
-                          </div>
-                        )}
-                        <span className="product-image-scan" aria-hidden="true" />
-                      </div>
-
-                      <div className="product-card-content">
-                        <div className="product-category-trail">
-                          <span>{cleanCategory(product.mainCategory)}</span>
-                          <ChevronRight size={11} />
-                          <span>{cleanCategory(product.secondCategory)}</span>
-                          <ChevronRight size={11} />
-                          <span>{cleanCategory(product.subCategory)}</span>
-                        </div>
-                        <h2 className="product-card-title">
-                          {product.name ||
-                            getContent(
-                              'products_default_product_name',
-                              'Produk Teknik Profesional',
-                            )}
-                        </h2>
-                        <div className="product-card-meta">
-                          <span>
-                            {getContent('products_card_meta_label', 'Professional equipment')}
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-amber-500">
-                            <Star size={13} fill="currentColor" /> {product.rating || '5'}
-                          </span>
-                        </div>
-                        <div className="product-price">
-                          {isTruthy(product.hasDiscount) &&
-                          getNumericPrice(product.discountPrice) > 0 &&
-                          getNumericPrice(product.discountPrice) <
-                            getNumericPrice(product.price) ? (
-                            <div className="mt-1 min-h-20.5">
-                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <strong className="text-xl font-bold tracking-tight text-red-500">
-                                  {formatCurrency(
-                                    product.discountPrice,
-                                    getContent('products_contact_price_label', 'Hubungi kami'),
-                                  )}
-                                </strong>
-
-                                <span className="text-xs text-(--text-muted) line-through">
-                                  {formatCurrency(
-                                    product.price,
-                                    getContent('products_contact_price_label', 'Hubungi kami'),
-                                  )}
-                                </span>
-
-                                <span className="rounded-md border border-red-500/20 bg-red-500/10 px-1.5 py-0.5 text-[10px] font-bold text-red-500">
-                                  -{getDiscountPercent(product.price, product.discountPrice)}%
-                                </span>
-                              </div>
-
-                              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-                                <span className="inline-flex items-center rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-600">
-                                  {getContent(
-                                    'products_best_price_guarantee',
-                                    'Garansi Harga Terbaik',
-                                  )}
-                                </span>
-
-                                <span className="text-xs font-medium text-(--text-muted)">
-                                  {formatSoldCount(
-                                    product.soldCount,
-                                    getContent('products_sold_label', 'terjual'),
-                                  )}
-                                </span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="mt-1 min-h-20.5">
-                              <strong className="text-xl font-bold tracking-tight text-(--text-primary)">
-                                {formatCurrency(
-                                  product.price,
-                                  getContent('products_contact_price_label', 'Hubungi kami'),
-                                )}
-                              </strong>
-
-                              <div className="mt-2">
-                                <span className="text-xs font-medium text-(--text-muted)">
-                                  {formatSoldCount(
-                                    product.soldCount,
-                                    getContent('products_sold_label', 'terjual'),
-                                  )}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <div className="product-card-actions product-card-actions-single">
-                          <Link
-                            href="/contact"
-                            className="site-button site-button-primary"
-                            onClick={(event) => event.stopPropagation()}
-                          >
-                            {getContent('products_offer_button', 'Penawaran')}
-                          </Link>
-                        </div>
-                      </div>
-                    </motion.article>
+                      product={product}
+                      index={index}
+                      content={content}
+                      eagerImage={index === 0}
+                    />
                   ))}
                 </AnimatePresence>
               </motion.div>
@@ -1064,167 +1327,6 @@ export default function ProductsPage() {
           </div>
         </div>
       </section>
-
-      <AnimatePresence>
-        {mobileFiltersOpen && (
-          <motion.div
-            className="category-mobile-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onMouseDown={(event) => {
-              if (event.currentTarget === event.target) setMobileFiltersOpen(false);
-            }}
-          >
-            <motion.aside
-              className="category-mobile-drawer"
-              initial={{ x: '-102%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-102%' }}
-              transition={{ type: 'spring', stiffness: 310, damping: 32 }}
-            >
-              <CategorySidebar {...sidebarProps} onClose={() => setMobileFiltersOpen(false)} />
-            </motion.aside>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {selected && (
-          <motion.div
-            className="modal-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onMouseDown={(event) => {
-              if (event.currentTarget === event.target) setSelected(null);
-            }}
-          >
-            <motion.div
-              className="product-modal"
-              initial={{ opacity: 0, y: 24, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.96 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => setSelected(null)}
-                aria-label={getContent('products_close_detail_label', 'Tutup detail')}
-              >
-                <X size={19} />
-              </button>
-              <div className="product-modal-image">
-                <ProductDetailGallery
-                  key={selected.id ?? selected.name ?? 'produk'}
-                  name={selected.name || 'Produk Teknik'}
-                  imageUrl={selected.imageUrl}
-                  imageUrl2={selected.imageUrl2}
-                  imageUrl3={selected.imageUrl3}
-                  imageUrl4={selected.imageUrl4}
-                />
-              </div>
-              <div className="product-modal-content">
-                <span className="site-chip">
-                  {selected.mainCategory ||
-                    getContent('products_default_category_label', 'Peralatan')}
-                </span>
-                <h2 className="mt-6 text-3xl font-black tracking-[-0.04em]">{selected.name}</h2>
-                <p className="whitespace-pre-line text-(--text-secondary)">
-                  {selected.description?.trim() ||
-                    getContent(
-                      'products_detail_fallback',
-                      'Detail produk belum tersedia. Silakan hubungi kami untuk mendapatkan informasi lengkap produk ini.',
-                    )}
-                </p>
-                <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-[0.7fr_1.3fr]">
-                  <div className="site-card p-4">
-                    <span className="text-xs text-(--text-muted)">
-                      {getContent('products_rating_label', 'Rating Produk')}
-                    </span>
-
-                    <strong className="mt-2 flex items-center gap-2 text-lg">
-                      <Star size={17} fill="currentColor" className="text-amber-500" />
-
-                      {selected.rating || '5'}
-                    </strong>
-                  </div>
-
-                  <div className="site-card p-4">
-                    <span className="text-xs text-(--text-muted)">
-                      {getContent('products_price_label', 'Harga Produk')}
-                    </span>
-
-                    {isTruthy(selected.hasDiscount) &&
-                    getNumericPrice(selected.discountPrice) > 0 &&
-                    getNumericPrice(selected.discountPrice) < getNumericPrice(selected.price) ? (
-                      <div className="mt-2">
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <strong className="text-2xl font-bold tracking-tight text-red-500">
-                            {formatCurrency(
-                              selected.discountPrice,
-                              getContent('products_contact_price_label', 'Hubungi kami'),
-                            )}
-                          </strong>
-
-                          <span className="text-sm text-(--text-muted) line-through">
-                            {formatCurrency(
-                              selected.price,
-                              getContent('products_contact_price_label', 'Hubungi kami'),
-                            )}
-                          </span>
-
-                          <span className="rounded-md border border-red-500/20 bg-red-500/10 px-2 py-1 text-xs font-bold text-red-500">
-                            -{getDiscountPercent(selected.price, selected.discountPrice)}%
-                          </span>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-                          <span className="inline-flex items-center rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600">
-                            {getContent('products_best_price_guarantee', 'Garansi Harga Terbaik')}
-                          </span>
-
-                          {getNumericPrice(selected.soldCount) > 0 && (
-                            <span className="text-xs font-medium text-(--text-muted)">
-                              {formatSoldCount(
-                                selected.soldCount,
-                                getContent('products_sold_label', 'terjual'),
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-2">
-                        <strong className="block text-2xl font-bold tracking-tight text-(--text-primary)">
-                          {formatCurrency(
-                            selected.price,
-                            getContent('products_contact_price_label', 'Hubungi kami'),
-                          )}
-                        </strong>
-
-                        {getNumericPrice(selected.soldCount) > 0 && (
-                          <span className="mt-2 block text-xs font-medium text-(--text-muted)">
-                            {formatSoldCount(
-                              selected.soldCount,
-                              getContent('products_sold_label', 'terjual'),
-                            )}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <Link href="/contact" className="site-button site-button-primary mt-7 w-full">
-                  {getContent('products_request_offer_button', 'Minta Penawaran')}{' '}
-                  <ArrowRight size={17} />
-                </Link>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </main>
   );
 }

@@ -3,6 +3,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
+
 type PartnerRow = {
   id: string;
   nama: string;
@@ -73,7 +75,7 @@ export default function PartnerLogoStrip() {
           }}
         >
           <img
-            src={partner.urlLogo}
+            src={getOptimizedCloudinaryUrl(partner.urlLogo, { width: 380 })}
             alt={`Logo ${partner.nama}`}
             className="h-12 w-36 object-contain"
             loading="lazy"

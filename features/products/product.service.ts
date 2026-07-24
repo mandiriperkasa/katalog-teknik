@@ -2,10 +2,7 @@ import { z } from 'zod';
 
 import { getDatabase } from '@/lib/database/neon';
 
-import {
-  createProducts as insertProducts,
-  findProducts,
-} from './product.repository';
+import { createProducts as insertProducts, findProducts } from './product.repository';
 
 const productQuerySchema = z.object({
   search: z.string().trim().max(100).optional(),
@@ -23,7 +20,14 @@ const optionalPublicId = z
   .optional()
   .nullable()
   .transform((value) => value ?? '');
-
+const optionalMarketplaceUrl = z
+  .string()
+  .trim()
+  .url('URL marketplace harus lengkap, termasuk https://')
+  .or(z.literal(''))
+  .optional()
+  .nullable()
+  .transform((value) => value ?? '');
 const productCreateSchema = z
   .object({
     name: z.string().trim().min(2, 'Nama produk minimal 2 karakter.'),
@@ -36,6 +40,7 @@ const productCreateSchema = z
     discountPrice: z.coerce.number().min(0).optional().nullable(),
     soldCount: z.coerce.number().int().min(0).default(0),
     rating: z.coerce.number().min(0).max(5),
+    showRating: z.boolean().default(true),
     imageUrl: z.string().trim().min(1, 'Gambar produk wajib diunggah.'),
     imagePublicId: optionalPublicId,
     imageUrl2: optionalImageUrl,
@@ -44,7 +49,10 @@ const productCreateSchema = z
     imagePublicId3: optionalPublicId,
     imageUrl4: optionalImageUrl,
     imagePublicId4: optionalPublicId,
+    tokopediaUrl: optionalMarketplaceUrl,
+    tiktokShopUrl: optionalMarketplaceUrl,
     isBestSeller: z.coerce.boolean().default(false),
+    isPromotion: z.coerce.boolean().default(false),
   })
   .superRefine((value, context) => {
     if (!value.hasDiscount) return;
@@ -93,6 +101,7 @@ export async function createProduct(input: unknown) {
       discountPrice: parsed.hasDiscount ? Number(parsed.discountPrice) || null : null,
       soldCount: Math.max(0, Math.floor(parsed.soldCount || 0)),
       rating: parsed.rating,
+      showRating: parsed.showRating,
       imageUrl: parsed.imageUrl,
       imagePublicId: parsed.imagePublicId || null,
       imageUrl2: parsed.imageUrl2 || null,
@@ -101,7 +110,10 @@ export async function createProduct(input: unknown) {
       imagePublicId3: parsed.imagePublicId3 || null,
       imageUrl4: parsed.imageUrl4 || null,
       imagePublicId4: parsed.imagePublicId4 || null,
+      tokopediaUrl: parsed.tokopediaUrl || null,
+      tiktokShopUrl: parsed.tiktokShopUrl || null,
       isBestSeller: parsed.isBestSeller,
+      isPromotion: parsed.isPromotion,
     },
   ]);
 

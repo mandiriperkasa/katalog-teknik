@@ -9,7 +9,9 @@ type SettingRow = {
   value?: string;
 };
 
-function SocialGlyph({ kind }: { kind: 'tiktok' | 'facebook' | 'youtube' | 'instagram' }) {
+type SocialKind = 'tiktok' | 'facebook' | 'youtube' | 'instagram' | 'tokopedia' | 'tiktok-shop';
+
+function SocialGlyph({ kind }: { kind: SocialKind }) {
   if (kind === 'facebook') {
     return (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -40,6 +42,49 @@ function SocialGlyph({ kind }: { kind: 'tiktok' | 'facebook' | 'youtube' | 'inst
         <rect x="2" y="2" width="20" height="20" rx="5" />
         <circle cx="12" cy="12" r="4" />
         <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+      </svg>
+    );
+  }
+
+  if (kind === 'tokopedia') {
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M5 8.5h14l-1 11H6l-1-11Z" />
+        <path d="M8.5 8.5a3.5 3.5 0 0 1 7 0" />
+        <circle cx="9.5" cy="13" r="1.6" />
+        <circle cx="14.5" cy="13" r="1.6" />
+        <path d="m11 16 1 1 1-1" />
+      </svg>
+    );
+  }
+
+  if (kind === 'tiktok-shop') {
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M5 9h14l-1 11H6L5 9Z" />
+        <path d="M9 9a3 3 0 0 1 6 0" />
+        <path d="M13 12v4.1a2 2 0 1 1-1.8-2" />
+        <path d="M13 12c.45 1.05 1.2 1.65 2.25 1.8" />
       </svg>
     );
   }
@@ -115,6 +160,12 @@ export default function Footer() {
     { label: 'Facebook', href: settingsMap.link_fb, kind: 'facebook' as const },
     { label: 'YouTube', href: settingsMap.link_youtube, kind: 'youtube' as const },
     { label: 'Instagram', href: settingsMap.link_instagram, kind: 'instagram' as const },
+    { label: 'Tokopedia', href: settingsMap.link_tokopedia, kind: 'tokopedia' as const },
+    {
+      label: 'TikTok Shop',
+      href: settingsMap.link_tiktok_shop,
+      kind: 'tiktok-shop' as const,
+    },
   ].filter((item) => item.href && item.href !== '#');
 
   const phone = settingsMap.footer_phone || '0856 4010 0044';

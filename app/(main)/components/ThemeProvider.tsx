@@ -14,14 +14,18 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 const STORAGE_KEY = 'mp-site-theme';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<SiteTheme>('dark');
+  const [theme, setThemeState] = useState<SiteTheme>('light');
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY) as SiteTheme | null;
-    const preferred: SiteTheme = window.matchMedia('(prefers-color-scheme: light)').matches
-      ? 'light'
-      : 'dark';
-    const nextTheme = saved === 'dark' || saved === 'light' ? saved : preferred;
+    let saved: SiteTheme | null = null;
+
+    try {
+      saved = window.localStorage.getItem(STORAGE_KEY) as SiteTheme | null;
+    } catch {
+      // Gunakan tema terang saat penyimpanan browser tidak tersedia.
+    }
+
+    const nextTheme = saved === 'dark' || saved === 'light' ? saved : 'light';
 
     document.documentElement.dataset.siteTheme = nextTheme;
     const frame = window.requestAnimationFrame(() => setThemeState(nextTheme));
@@ -30,9 +34,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = (nextTheme: SiteTheme) => {
     document.documentElement.dataset.siteTheme = nextTheme;
-    const frame = window.requestAnimationFrame(() => setThemeState(nextTheme));
-    return () => window.cancelAnimationFrame(frame);
-    window.localStorage.setItem(STORAGE_KEY, nextTheme);
+    setThemeState(nextTheme);
+
+    try {
+      window.localStorage.setItem(STORAGE_KEY, nextTheme);
+    } catch {
+      // Tema tetap berubah meskipun penyimpanan browser tidak tersedia.
+    }
   };
 
   const value = useMemo(

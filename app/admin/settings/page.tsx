@@ -64,6 +64,8 @@ const labelMap: Record<string, string> = {
   link_fb: 'Link Facebook',
   link_youtube: 'Link YouTube',
   link_instagram: 'Link Instagram',
+  link_tokopedia: 'Link Tokopedia',
+  link_tiktok_shop: 'Link TikTok Shop',
 };
 
 const removablePrefixes = [
@@ -696,9 +698,7 @@ export default function SettingsPage() {
                         kind={imageUploadKind}
                         label={formatLabel(setting.key)}
                         value={value}
-                        onChange={(nextValue) =>
-                          handleChange(setting.key, nextValue)
-                        }
+                        onChange={(nextValue) => handleChange(setting.key, nextValue)}
                       />
                     )}
                     {booleanSetting ? (

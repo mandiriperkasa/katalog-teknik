@@ -13,6 +13,7 @@ import {
 import { createPortal } from 'react-dom';
 
 import { useSheetData } from '../../hooks/useSheetData';
+import { getOptimizedCloudinaryUrl, isCloudinaryUrl } from '@/lib/cloudinary-image';
 import PageHero from '../components/PageHero';
 
 type GalleryRow = {
@@ -260,9 +261,10 @@ export default function GalleryPage() {
                   </>
                 ) : item.imageUrl ? (
                   <Image
-                    src={item.imageUrl}
+                    src={getOptimizedCloudinaryUrl(item.imageUrl, { width: 1400 })}
                     alt={item.title || 'Dokumentasi workshop'}
                     fill
+                    unoptimized={isCloudinaryUrl(item.imageUrl)}
                     sizes="(max-width: 760px) 100vw, (max-width: 1040px) 50vw, 66vw"
                     loading={index === 0 ? 'eager' : 'lazy'}
                     className="gallery-image"
@@ -410,10 +412,11 @@ export default function GalleryPage() {
                         </div>
                       ) : selectedItem.imageUrl ? (
                         <Image
-                          src={selectedItem.imageUrl}
+                          src={getOptimizedCloudinaryUrl(selectedItem.imageUrl, { width: 1600 })}
                           alt={selectedItem.title || 'Detail galeri'}
                           fill
                           priority
+                          unoptimized={isCloudinaryUrl(selectedItem.imageUrl)}
                           sizes="(max-width: 1024px) 100vw, 65vw"
                           className="object-contain p-3 sm:p-5"
                         />

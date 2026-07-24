@@ -8,17 +8,13 @@ const themeScript = `
     var theme =
       saved === 'light' || saved === 'dark'
         ? saved
-        : window.matchMedia(
-            '(prefers-color-scheme: light)'
-          ).matches
-          ? 'light'
-          : 'dark';
+        : 'light';
 
     document.documentElement.dataset.siteTheme =
       theme;
   } catch (_) {
     document.documentElement.dataset.siteTheme =
-      'dark';
+      'light';
   }
 })();
 `;

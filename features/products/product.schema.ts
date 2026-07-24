@@ -7,6 +7,10 @@ export const productSchema = z.object({
   subCategory: z.string().default('Lainnya'),
   price: z.number().min(0),
   rating: z.number().min(0).max(5),
+  showRating: z.boolean().default(true),
   imageUrl: z.string().url().or(z.literal('')),
+  tokopediaUrl: z.string().url().or(z.literal('')).optional(),
+  tiktokShopUrl: z.string().url().or(z.literal('')).optional(),
   isBestSeller: z.boolean(),
+  isPromotion: z.boolean().default(false),
 });

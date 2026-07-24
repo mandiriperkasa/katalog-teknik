@@ -11,6 +11,8 @@ import {
   Music2,
   Save,
   Share2,
+  ShoppingBag,
+  Store,
   Users,
   Video,
 } from 'lucide-react';
@@ -21,7 +23,13 @@ type SettingRow = {
   value?: string;
 };
 
-type SocialKey = 'link_tiktok' | 'link_fb' | 'link_youtube' | 'link_instagram';
+type SocialKey =
+  | 'link_tiktok'
+  | 'link_fb'
+  | 'link_youtube'
+  | 'link_instagram'
+  | 'link_tokopedia'
+  | 'link_tiktok_shop';
 
 type SocialValues = Record<SocialKey, string>;
 
@@ -35,6 +43,8 @@ const initialValues: SocialValues = {
   link_fb: '',
   link_youtube: '',
   link_instagram: '',
+  link_tokopedia: '',
+  link_tiktok_shop: '',
 };
 
 const platforms = [
@@ -69,6 +79,22 @@ const platforms = [
     placeholder: 'https://www.instagram.com/username',
     icon: Camera,
     accent: 'from-fuchsia-500/16 to-amber-300/[0.035]',
+  },
+  {
+    key: 'link_tokopedia' as const,
+    name: 'Tokopedia',
+    description: 'Tautan toko resmi perusahaan di Tokopedia.',
+    placeholder: 'https://www.tokopedia.com/nama-toko',
+    icon: Store,
+    accent: 'from-emerald-500/16 to-green-300/[0.035]',
+  },
+  {
+    key: 'link_tiktok_shop' as const,
+    name: 'TikTok Shop',
+    description: 'Tautan etalase produk perusahaan di TikTok Shop.',
+    placeholder: 'https://shop.tiktok.com/view/product/...',
+    icon: ShoppingBag,
+    accent: 'from-cyan-500/14 via-fuchsia-500/[0.07] to-red-400/[0.035]',
   },
 ];
 
@@ -139,6 +165,8 @@ export default function SocialMediaSettingsPage() {
           link_fb: settingsMap.link_fb ?? '',
           link_youtube: settingsMap.link_youtube ?? '',
           link_instagram: settingsMap.link_instagram ?? '',
+          link_tokopedia: settingsMap.link_tokopedia ?? '',
+          link_tiktok_shop: settingsMap.link_tiktok_shop ?? '',
         };
 
         if (!cancelled) {
@@ -227,6 +255,8 @@ export default function SocialMediaSettingsPage() {
       link_fb: values.link_fb.trim(),
       link_youtube: values.link_youtube.trim(),
       link_instagram: values.link_instagram.trim(),
+      link_tokopedia: values.link_tokopedia.trim(),
+      link_tiktok_shop: values.link_tiktok_shop.trim(),
     };
 
     const changedPlatforms = platforms.filter(
@@ -288,15 +318,17 @@ export default function SocialMediaSettingsPage() {
             </h2>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-              Kelola alamat TikTok, Facebook, YouTube, dan Instagram yang ditampilkan pada footer
-              website.
+              Kelola alamat TikTok, Facebook, YouTube, Instagram, Tokopedia, dan TikTok Shop yang
+              ditampilkan pada footer website.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="hidden rounded-xl border border-white/[0.08] bg-white/[0.035] px-4 py-2.5 text-xs text-slate-500 sm:block">
-              <strong className="font-semibold text-slate-200">{configuredCount}/4</strong> tautan
-              terisi
+              <strong className="font-semibold text-slate-200">
+                {configuredCount}/{platforms.length}
+              </strong>{' '}
+              tautan terisi
             </div>
 
             <button
@@ -463,7 +495,9 @@ export default function SocialMediaSettingsPage() {
         menggunakan key <code className="text-slate-400">link_tiktok</code>,{' '}
         <code className="text-slate-400">link_fb</code>,{' '}
         <code className="text-slate-400">link_youtube</code>, dan{' '}
-        <code className="text-slate-400">link_instagram</code>.
+        <code className="text-slate-400">link_instagram</code>,{' '}
+        <code className="text-slate-400">link_tokopedia</code>, serta{' '}
+        <code className="text-slate-400">link_tiktok_shop</code>.
       </div>
     </div>
   );

@@ -11,16 +11,15 @@ import {
   PackageCheck,
   ShieldCheck,
   Sparkles,
-  Star,
   Tag,
-  Wrench,
   Zap,
 } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
 import { useSheetData } from '../hooks/useSheetData';
 import PartnerLogoStrip from './components/PartnerLogoStrip';
+import ProductCard from './components/ProductCard';
 import SectionHeading from './components/SectionHeading';
 
 type ProductRow = {
@@ -36,6 +35,7 @@ type ProductRow = {
   discountPrice?: number | string | null;
   soldCount?: number | string | null;
   rating?: number | string | null;
+  showRating?: boolean | string | null;
   imageUrl?: string | null;
   isBestSeller?: boolean | string | null;
 };
@@ -83,63 +83,6 @@ const process = [
   },
 ];
 
-function formatCurrency(value?: string | number | null) {
-  const number = Number(String(value ?? '').replace(/[^0-9.-]/g, ''));
-  if (!Number.isFinite(number)) return value || 'Hubungi kami';
-
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(number);
-}
-
-function getNumericPrice(value?: number | string | null) {
-  return Number(value) || 0;
-}
-
-function getDiscountPercent(
-  price?: number | string | null,
-  discountPrice?: number | string | null,
-) {
-  const originalPrice = getNumericPrice(price);
-  const finalPrice = getNumericPrice(discountPrice);
-
-  if (originalPrice <= 0 || finalPrice <= 0 || finalPrice >= originalPrice) {
-    return 0;
-  }
-
-  return Math.round(((originalPrice - finalPrice) / originalPrice) * 100);
-}
-
-function formatSoldCount(value?: number | string | null) {
-  const soldCount = Math.max(0, Math.floor(Number(value) || 0));
-
-  if (soldCount >= 1_000_000) {
-    const formatted = (soldCount / 1_000_000).toFixed(1).replace('.0', '').replace('.', ',');
-
-    return `${formatted}JT+ terjual`;
-  }
-
-  if (soldCount >= 1_000) {
-    const formatted = (soldCount / 1_000).toFixed(1).replace('.0', '').replace('.', ',');
-
-    return `${formatted}RB+ terjual`;
-  }
-
-  return `${soldCount.toLocaleString('id-ID')} terjual`;
-}
-
-function isTruthy(value?: boolean | string | null) {
-  if (typeof value === 'boolean') return value;
-
-  return ['true', '1', 'yes', 'ya'].includes(
-    String(value ?? '')
-      .trim()
-      .toLowerCase(),
-  );
-}
-
 function getProductCategory(product: ProductRow) {
   return product.secondCategory?.trim() || product.mainCategory?.trim() || 'Peralatan';
 }
@@ -158,11 +101,6 @@ function getTopSellingProducts(products: ProductRow[]) {
   return [...products]
     .sort((left, right) => getProductSoldCount(right) - getProductSoldCount(left))
     .slice(0, 10);
-}
-
-function getProductDetailHref(product: ProductRow) {
-  const detailKey = product.id ?? product.legacyNo ?? product.name ?? '';
-  return `/products?detail=${encodeURIComponent(String(detailKey))}`;
 }
 
 export default function Home() {
@@ -245,6 +183,9 @@ export default function Home() {
   }, [resolvedActiveCategory, bestSellerProducts]);
 
   const heroBackgroundImage = content.hero_background_url?.trim() || '';
+  const optimizedHeroBackgroundImage = getOptimizedCloudinaryUrl(heroBackgroundImage, {
+    width: 1920,
+  });
 
   const [loadedHeroImage, setLoadedHeroImage] = useState('');
 
@@ -272,7 +213,7 @@ export default function Home() {
 
     image.onload = handleLoad;
     image.onerror = handleError;
-    image.src = heroBackgroundImage;
+    image.src = optimizedHeroBackgroundImage;
 
     if (image.complete && image.naturalWidth > 0) {
       handleLoad();
@@ -283,7 +224,7 @@ export default function Home() {
       image.onload = null;
       image.onerror = null;
     };
-  }, [heroBackgroundImage]);
+  }, [heroBackgroundImage, optimizedHeroBackgroundImage]);
 
   return (
     <main>
@@ -293,7 +234,7 @@ export default function Home() {
             key={heroBackgroundImage}
             className="hero-background-image"
             style={{
-              backgroundImage: `url("${heroBackgroundImage}")`,
+              backgroundImage: `url("${optimizedHeroBackgroundImage}")`,
             }}
             initial={{
               opacity: 0,
@@ -455,7 +396,10 @@ export default function Home() {
         </a>
       </section>
 
-      <section id="home-content-start" className="section-block section-shell">
+      <section
+        id="home-content-start"
+        className="section-block section-shell home-features-section"
+      >
         <SectionHeading
           eyebrow="Mengapa memilih kami"
           title="Lebih dari sekadar katalog produk."
@@ -484,7 +428,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section-block section-shell home-products-section">
+      <section className="section-block section-shell home-products-section product-listing-page">
         <div className="home-products-heading">
           <SectionHeading
             eyebrow="Produk unggulan"
@@ -517,138 +461,16 @@ export default function Home() {
           </span>
         </div>
 
-        <motion.div className="product-grid home-product-grid" layout>
+        <motion.div className="product-grid product-catalog-grid home-product-grid" layout>
           <AnimatePresence mode="popLayout">
             {visibleProducts.map((product, index) => (
-              <motion.article
-                layout
+              <ProductCard
                 key={`${resolvedActiveCategory}-${product.legacyNo ?? index}-${product.name ?? 'produk'}`}
-                className="site-card product-card product-catalog-card product-card-clickable"
-                data-aos="fade-up"
-                data-aos-delay={String((index % 3) * 90)}
-                initial={{ opacity: 0, y: 24, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 16, scale: 0.96 }}
-                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                whileHover={{ y: -9 }}
-
-                role="link"
-                tabIndex={0}
-                aria-label={`Lihat detail ${product.name || 'Produk'}`}
-                onClick={() => {
-                  window.location.href = getProductDetailHref(product);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    window.location.href = getProductDetailHref(product);
-                  }
-                }}
-              >
-                <div className="product-card-glow" />
-                <div className="product-image-wrap">
-                  <div className="product-badge-stack">
-                    <span className="site-chip product-badge product-badge-best">
-                      <BadgeCheck size={13} /> Terlaris #{index + 1}
-                    </span>
-                    <span className="site-chip product-category-badge">
-                      <Boxes size={13} /> {getProductCategory(product)}
-                    </span>
-                  </div>
-                  {product.imageUrl ? (
-                    <Image
-                      src={product.imageUrl}
-                      alt={product.name || 'Produk teknik'}
-                      fill
-                      sizes="(max-width: 760px) 100vw, (max-width: 1040px) 50vw, 33vw"
-                      className="product-image"
-                    />
-                  ) : (
-                    <div className="product-image-placeholder">
-                      <Wrench size={46} strokeWidth={1.2} />
-                    </div>
-                  )}
-                  <div className="product-image-shine" />
-                </div>
-                <div className="product-card-content">
-                  <div className="product-category-trail">
-                    <span>{product.mainCategory?.trim() || 'Peralatan'}</span>
-
-                    <span aria-hidden="true">›</span>
-
-                    <span>{product.secondCategory?.trim() || 'Kategori'}</span>
-
-                    <span aria-hidden="true">›</span>
-
-                    <span>{product.subCategory?.trim() || 'Produk'}</span>
-                  </div>
-
-                  <h3 className="product-card-title">
-                    {product.name || 'Produk Teknik Profesional'}
-                  </h3>
-
-                  <div className="product-card-meta">
-                    <span>Professional equipment</span>
-
-                    <span className="inline-flex items-center gap-1 text-amber-500">
-                      <Star size={13} fill="currentColor" />
-                      {product.rating || '5'}
-                    </span>
-                  </div>
-
-                  {isTruthy(product.hasDiscount) &&
-                  getNumericPrice(product.discountPrice) > 0 &&
-                  getNumericPrice(product.discountPrice) < getNumericPrice(product.price) ? (
-                    <div className="mt-1 min-h-20.5">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <strong className="text-xl font-bold tracking-tight text-red-500">
-                          {formatCurrency(product.discountPrice)}
-                        </strong>
-
-                        <span className="text-xs text-(--text-muted) line-through">
-                          {formatCurrency(product.price)}
-                        </span>
-
-                        <span className="rounded-md border border-red-500/20 bg-red-500/10 px-1.5 py-0.5 text-[10px] font-bold text-red-500">
-                          -{getDiscountPercent(product.price, product.discountPrice)}%
-                        </span>
-                      </div>
-
-                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-                        <span className="inline-flex items-center rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-600">
-                          Garansi Harga Terbaik
-                        </span>
-
-                        <span className="text-xs font-medium text-(--text-muted)">
-                          {formatSoldCount(product.soldCount)}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mt-1 min-h-20.5">
-                      <strong className="text-xl font-bold tracking-tight text-(--text-primary)">
-                        {formatCurrency(product.price)}
-                      </strong>
-
-                      <div className="mt-2">
-                        <span className="text-xs font-medium text-(--text-muted)">
-                          {formatSoldCount(product.soldCount)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="product-card-actions product-card-actions-single">
-                    <Link
-                      href="/contact"
-                      className="site-button site-button-primary"
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      Penawaran
-                    </Link>
-                  </div>
-                </div>
-              </motion.article>
+                product={product}
+                index={index}
+                content={content}
+                eagerImage={index === 0}
+              />
             ))}
           </AnimatePresence>
         </motion.div>
@@ -673,7 +495,7 @@ export default function Home() {
         )}
       </section>
 
-      <section className="section-block section-shell">
+      <section className="section-block section-shell home-process-section home-lower-section">
         <SectionHeading
           eyebrow="Alur kerja"
           title="Dari kebutuhan menjadi solusi."
@@ -696,7 +518,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section-block section-shell">
+      <section className="section-block section-shell home-lower-section">
         <div className="site-card p-7 sm:p-10" data-aos="blur-in">
           <div className="flex flex-col justify-between gap-7 lg:flex-row lg:items-end">
             <SectionHeading
@@ -716,7 +538,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section-block section-shell">
+      <section className="section-block section-shell home-lower-section">
         <div className="stats-grid">
           {[
             { value: `${allProducts.length}+`, label: 'Produk pilihan', icon: Boxes },

@@ -4,11 +4,14 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
+  ExternalLink,
   ImagePlus,
   LoaderCircle,
   Move,
   Save,
+  ShoppingBag,
   Star,
+  Store,
   Trash2,
   ZoomIn,
 } from 'lucide-react';
@@ -29,6 +32,7 @@ type ProductData = {
   discountPrice?: number | '' | null;
   soldCount?: number | '' | null;
   rating: number | '';
+  showRating?: boolean;
   imageUrl: string;
   imagePublicId?: string | null;
   imageUrl2?: string | null;
@@ -37,7 +41,10 @@ type ProductData = {
   imagePublicId3?: string | null;
   imageUrl4?: string | null;
   imagePublicId4?: string | null;
+  tokopediaUrl?: string | null;
+  tiktokShopUrl?: string | null;
   isBestSeller?: boolean;
+  isPromotion?: boolean;
 };
 
 type ProductFormProps = {
@@ -190,6 +197,17 @@ function parseRupiah(value: string) {
   return digits ? Number(digits) : '';
 }
 
+function isValidOptionalWebUrl(value?: string | null) {
+  if (!value?.trim()) return true;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 function createInitialSlots(initialData?: ProductData): ImageSlot[] {
   const values = [
     [initialData?.imageUrl, initialData?.imagePublicId],
@@ -291,6 +309,7 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
     discountPrice: initialData?.discountPrice ?? '',
     soldCount: initialData?.soldCount ?? 0,
     rating: initialData?.rating ?? '',
+    showRating: initialData?.showRating !== false,
     imageUrl: initialData?.imageUrl || '',
     imagePublicId: initialData?.imagePublicId || '',
     imageUrl2: initialData?.imageUrl2 || '',
@@ -299,7 +318,10 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
     imagePublicId3: initialData?.imagePublicId3 || '',
     imageUrl4: initialData?.imageUrl4 || '',
     imagePublicId4: initialData?.imagePublicId4 || '',
+    tokopediaUrl: initialData?.tokopediaUrl || '',
+    tiktokShopUrl: initialData?.tiktokShopUrl || '',
     isBestSeller: Boolean(initialData?.isBestSeller),
+    isPromotion: Boolean(initialData?.isPromotion),
   });
 
   const selectedImageCount = useMemo(
@@ -417,7 +439,12 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
       if (!imageSlots[0].file && !imageSlots[0].url) {
         throw new Error('Foto utama produk wajib dipilih.');
       }
-
+      if (!isValidOptionalWebUrl(form.tokopediaUrl)) {
+        throw new Error('URL Tokopedia harus lengkap, termasuk https://');
+      }
+      if (!isValidOptionalWebUrl(form.tiktokShopUrl)) {
+        throw new Error('URL TikTok Shop harus lengkap, termasuk https://');
+      }
       if (form.hasDiscount) {
         const discountPrice = Number(form.discountPrice) || 0;
         if (discountPrice <= 0 || discountPrice >= Number(form.price)) {
@@ -440,6 +467,7 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
         discountPrice: form.hasDiscount ? Number(form.discountPrice) || null : null,
         soldCount: Math.max(0, Math.floor(Number(form.soldCount) || 0)),
         rating: Number(form.rating),
+        showRating: form.showRating !== false,
         imageUrl: uploadedImages[0].url,
         imagePublicId: uploadedImages[0].publicId,
         imageUrl2: uploadedImages[1].url || null,
@@ -448,7 +476,10 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
         imagePublicId3: uploadedImages[2].publicId || null,
         imageUrl4: uploadedImages[3].url || null,
         imagePublicId4: uploadedImages[3].publicId || null,
+        tokopediaUrl: form.tokopediaUrl?.trim() || null,
+        tiktokShopUrl: form.tiktokShopUrl?.trim() || null,
         isBestSeller: Boolean(form.isBestSeller),
+        isPromotion: Boolean(form.isPromotion),
       };
 
       const endpoint = mode === 'create' ? '/api/products' : `/api/products/${initialData?.id}`;
@@ -622,15 +653,102 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
             </label>
           </div>
 
-          <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 text-sm font-medium text-slate-200">
-            <input
-              type="checkbox"
-              checked={form.isBestSeller}
-              onChange={(event) => updateField('isBestSeller', event.target.checked)}
-              className="h-4 w-4 rounded border-white/20"
-            />
-            Tandai sebagai produk terlaris
-          </label>
+          <div className="overflow-hidden rounded-2xl border border-emerald-300/10 bg-gradient-to-br from-emerald-400/[0.055] via-white/[0.02] to-cyan-400/[0.035] p-4">
+            <div className="mb-4 flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-emerald-300/15 bg-emerald-400/[0.08] text-emerald-300 shadow-lg shadow-emerald-950/20">
+                <ShoppingBag className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-100">Link Produk Marketplace</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-400">
+                  Opsional. Jika kosong, tombol detail produk memakai link toko global dari footer.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="grid gap-2 text-sm font-medium text-slate-200">
+                <span className="inline-flex items-center gap-2">
+                  <Store className="h-4 w-4 text-emerald-400" /> URL produk Tokopedia
+                </span>
+                <div className="relative">
+                  <input
+                    className="admin-input pr-10"
+                    type="url"
+                    inputMode="url"
+                    placeholder="https://www.tokopedia.com/nama-toko/produk"
+                    value={form.tokopediaUrl || ''}
+                    onChange={(event) => updateField('tokopediaUrl', event.target.value)}
+                  />
+                  <ExternalLink className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                </div>
+              </label>
+
+              <label className="grid gap-2 text-sm font-medium text-slate-200">
+                <span className="inline-flex items-center gap-2">
+                  <ShoppingBag className="h-4 w-4 text-cyan-300" /> URL produk TikTok Shop
+                </span>
+                <div className="relative">
+                  <input
+                    className="admin-input pr-10"
+                    type="url"
+                    inputMode="url"
+                    placeholder="https://shop.tiktok.com/view/product/..."
+                    value={form.tiktokShopUrl || ''}
+                    onChange={(event) => updateField('tiktokShopUrl', event.target.value)}
+                  />
+                  <ExternalLink className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 text-sm font-medium text-slate-200">
+              <input
+                type="checkbox"
+                checked={form.showRating !== false}
+                onChange={(event) => updateField('showRating', event.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-white/20"
+              />
+              <span>
+                Tampilkan rating bintang
+                <small className="mt-1 block font-normal leading-5 text-slate-400">
+                  Nonaktifkan untuk menyembunyikan bintang dan angka rating di halaman produk.
+                </small>
+              </span>
+            </label>
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 text-sm font-medium text-slate-200">
+              <input
+                type="checkbox"
+                checked={form.isBestSeller}
+                onChange={(event) => updateField('isBestSeller', event.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-white/20"
+              />
+              <span>
+                Tandai sebagai produk terlaris
+                <small className="mt-1 block font-normal leading-5 text-slate-400">
+                  Produk dapat ditampilkan sebagai pilihan terlaris pada katalog.
+                </small>
+              </span>
+            </label>
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-fuchsia-300/10 bg-fuchsia-400/[0.035] p-4 text-sm font-medium text-slate-200">
+              <input
+                type="checkbox"
+                checked={form.isPromotion}
+                onChange={(event) => updateField('isPromotion', event.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-fuchsia-500"
+              />
+              <span>
+                Tampilkan sebagai promo
+                <small className="mt-1 block font-normal leading-5 text-slate-400">
+                  Produk otomatis muncul pada card promo di hero katalog.
+                </small>
+              </span>
+            </label>
+          </div>
         </div>
       </section>
 

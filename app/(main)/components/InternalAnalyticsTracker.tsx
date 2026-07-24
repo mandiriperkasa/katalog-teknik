@@ -5,16 +5,29 @@ import { useEffect } from 'react';
 
 const SESSION_KEY = 'katalog_analytics_session';
 
+function createSessionId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const values = crypto.getRandomValues(new Uint32Array(4));
+    return Array.from(values, (value) => value.toString(16).padStart(8, '0')).join('-');
+  }
+
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 function getSessionId() {
   try {
     const existing = sessionStorage.getItem(SESSION_KEY);
     if (existing) return existing;
 
-    const value = crypto.randomUUID();
+    const value = createSessionId();
     sessionStorage.setItem(SESSION_KEY, value);
     return value;
   } catch {
-    return crypto.randomUUID();
+    return createSessionId();
   }
 }
 

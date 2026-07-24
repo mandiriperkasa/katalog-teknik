@@ -27,8 +27,10 @@ type ProductRow = {
   subCategory?: string | null;
   price?: number | string | null;
   rating?: number | string | null;
+  showRating?: boolean | null;
   imageUrl?: string | null;
   isBestSeller?: boolean | null;
+  isPromotion?: boolean | null;
 };
 
 function formatCurrency(value?: string | number | null) {
@@ -56,9 +58,13 @@ function isTruthy(value?: boolean | string | null) {
 export default function ProductsPage() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [promotionUpdatingIds, setPromotionUpdatingIds] = useState<Set<number>>(() => new Set());
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('Semua kategori');
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+
   async function handleDelete(id: number) {
     const confirmDelete = window.confirm('Apakah Anda yakin ingin menghapus produk ini?');
 
@@ -78,10 +84,116 @@ export default function ProductsPage() {
       }
 
       setProducts((prev) => prev.filter((product) => product.id !== id));
+      setSelectedIds((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Terjadi kesalahan.');
     }
   }
+
+  function toggleProductSelection(id: number) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+
+      return next;
+    });
+  }
+
+  async function handlePromotionToggle(product: ProductRow) {
+    if (!product.id || promotionUpdatingIds.has(product.id)) return;
+
+    const productId = product.id;
+    const nextValue = !isTruthy(product.isPromotion);
+    setPromotionUpdatingIds((current) => new Set(current).add(productId));
+
+    try {
+      const response = await fetch(`/api/products/${productId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPromotion: nextValue }),
+      });
+      const result = (await response.json()) as { message?: string };
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Status promo gagal diperbarui.');
+      }
+
+      setProducts((current) =>
+        current.map((item) => (item.id === productId ? { ...item, isPromotion: nextValue } : item)),
+      );
+    } catch (promotionError) {
+      window.alert(
+        promotionError instanceof Error ? promotionError.message : 'Status promo gagal diperbarui.',
+      );
+    } finally {
+      setPromotionUpdatingIds((current) => {
+        const next = new Set(current);
+        next.delete(productId);
+        return next;
+      });
+    }
+  }
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0 || bulkDeleting) return;
+
+    const confirmed = window.confirm(
+      `Hapus ${ids.length} produk terpilih? Produk dan foto terkait akan dihapus permanen.`,
+    );
+
+    if (!confirmed) return;
+
+    setBulkDeleting(true);
+
+    try {
+      const results = await Promise.allSettled(
+        ids.map(async (id) => {
+          const response = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+          const result = (await response.json()) as { message?: string };
+
+          if (!response.ok) {
+            throw new Error(result.message || `Produk #${id} gagal dihapus.`);
+          }
+
+          return id;
+        }),
+      );
+
+      const deletedIds = new Set(
+        results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : [])),
+      );
+      const failedCount = results.length - deletedIds.size;
+
+      setProducts((current) =>
+        current.filter((product) => !product.id || !deletedIds.has(product.id)),
+      );
+      setSelectedIds((current) => {
+        const next = new Set(current);
+        deletedIds.forEach((id) => next.delete(id));
+        return next;
+      });
+
+      if (failedCount > 0) {
+        window.alert(
+          `${deletedIds.size} produk berhasil dihapus, tetapi ${failedCount} produk gagal dihapus.`,
+        );
+      }
+    } catch (deleteError) {
+      window.alert(
+        deleteError instanceof Error ? deleteError.message : 'Penghapusan massal gagal.',
+      );
+    } finally {
+      setBulkDeleting(false);
+    }
+  }
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -151,6 +263,25 @@ export default function ProductsPage() {
       return matchesCategory && (!keyword || searchable.includes(keyword));
     });
   }, [category, products, search]);
+
+  const visibleProductIds = filteredProducts.flatMap((product) => (product.id ? [product.id] : []));
+  const allVisibleSelected =
+    visibleProductIds.length > 0 && visibleProductIds.every((id) => selectedIds.has(id));
+  const someVisibleSelected = visibleProductIds.some((id) => selectedIds.has(id));
+
+  function toggleAllVisibleProducts() {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+
+      if (allVisibleSelected) {
+        visibleProductIds.forEach((id) => next.delete(id));
+      } else {
+        visibleProductIds.forEach((id) => next.add(id));
+      }
+
+      return next;
+    });
+  }
 
   const bestSellerCount = products.filter((product) => isTruthy(product.isBestSeller)).length;
 
@@ -274,6 +405,37 @@ export default function ProductsPage() {
       )}
 
       <section className="admin-panel overflow-hidden rounded-[24px]">
+        {selectedIds.size > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-300/10 bg-sky-400/[0.04] px-5 py-3">
+            <span className="text-sm font-semibold text-sky-100">
+              {selectedIds.size} produk dipilih
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                disabled={bulkDeleting}
+                className="min-h-9 rounded-lg px-3 text-xs font-semibold text-slate-400 transition hover:bg-white/[0.05] hover:text-white disabled:opacity-50"
+              >
+                Batalkan pilihan
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                disabled={bulkDeleting}
+                className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-red-300/15 bg-red-400/[0.08] px-3.5 text-xs font-semibold text-red-200 transition hover:bg-red-400/[0.14] disabled:cursor-wait disabled:opacity-60"
+              >
+                {bulkDeleting ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                {bulkDeleting ? 'Menghapus...' : 'Hapus terpilih'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex min-h-[360px] flex-col items-center justify-center gap-3 text-slate-500">
             <LoaderCircle className="h-7 w-7 animate-spin text-sky-300" />
@@ -291,14 +453,31 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto admin-scrollbar">
-            <table className="w-full min-w-[960px] text-left">
+            <table className="w-full min-w-[1100px] text-left">
               <thead>
                 <tr className="border-b border-white/[0.07] bg-white/[0.025] text-[10px] font-bold uppercase tracking-[0.13em] text-slate-600">
+                  <th className="w-12 px-4 py-4 text-center">
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      ref={(input) => {
+                        if (input) input.indeterminate = someVisibleSelected && !allVisibleSelected;
+                      }}
+                      onChange={toggleAllVisibleProducts}
+                      aria-label={
+                        allVisibleSelected
+                          ? 'Batalkan pilihan semua produk'
+                          : 'Pilih semua produk yang tampil'
+                      }
+                      className="h-4 w-4 cursor-pointer accent-sky-500"
+                    />
+                  </th>
                   <th className="px-6 py-4">Produk</th>
                   <th className="px-4 py-4">Kategori</th>
                   <th className="px-4 py-4">Harga</th>
                   <th className="px-4 py-4">Rating</th>
                   <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4 text-center">Promo</th>
                   <th className="px-6 py-4 text-right">Nomor</th>
                   <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
@@ -314,6 +493,17 @@ export default function ProductsPage() {
                       transition={{ duration: 0.18 }}
                       className="group transition hover:bg-sky-400/[0.025]"
                     >
+                      <td className="px-4 py-4 text-center">
+                        {product.id && (
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(product.id)}
+                            onChange={() => toggleProductSelection(product.id!)}
+                            aria-label={`Pilih ${product.name || `produk #${product.id}`}`}
+                            className="h-4 w-4 cursor-pointer accent-sky-500"
+                          />
+                        )}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.035]">
@@ -350,10 +540,14 @@ export default function ProductsPage() {
                         {formatCurrency(product.price)}
                       </td>
                       <td className="px-4 py-4">
-                        <span className="inline-flex items-center gap-1.5 text-sm text-amber-200">
-                          <Star className="h-4 w-4 fill-amber-300 text-amber-300" />
-                          {product.rating || '—'}
-                        </span>
+                        {product.showRating !== false ? (
+                          <span className="inline-flex items-center gap-1.5 text-sm text-amber-200">
+                            <Star className="h-4 w-4 fill-amber-300 text-amber-300" />
+                            {product.rating || '—'}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-600">Disembunyikan</span>
+                        )}
                       </td>
                       <td className="px-4 py-4">
                         {isTruthy(product.isBestSeller) ? (
@@ -364,6 +558,21 @@ export default function ProductsPage() {
                         ) : (
                           <span className="text-xs text-slate-600">Reguler</span>
                         )}
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <label className="inline-flex cursor-pointer items-center justify-center">
+                          <input
+                            type="checkbox"
+                            checked={isTruthy(product.isPromotion)}
+                            disabled={
+                              !product.id ||
+                              (product.id ? promotionUpdatingIds.has(product.id) : false)
+                            }
+                            onChange={() => void handlePromotionToggle(product)}
+                            className="h-4 w-4 cursor-pointer accent-fuchsia-500 disabled:cursor-wait disabled:opacity-50"
+                            aria-label={`${isTruthy(product.isPromotion) ? 'Nonaktifkan' : 'Aktifkan'} promo ${product.name || 'produk'}`}
+                          />
+                        </label>
                       </td>
                       <td className="px-6 py-4 text-right text-xs font-medium text-slate-600">
                         #{product.legacyNo || index + 1}

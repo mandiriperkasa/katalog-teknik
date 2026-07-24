@@ -18,8 +18,12 @@ type ProductData = {
   discountPrice?: number | null;
   soldCount?: number;
   rating: number;
+  showRating?: boolean;
   imageUrl: string;
   imagePublicId?: string;
+  tokopediaUrl?: string | null;
+  tiktokShopUrl?: string | null;
+  isPromotion?: boolean;
 };
 
 export default function EditProductPage() {
