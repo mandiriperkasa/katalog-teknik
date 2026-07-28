@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
-import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
 import { useSheetData } from '../hooks/useSheetData';
 import PartnerLogoStrip from './components/PartnerLogoStrip';
 import ProductCard from './components/ProductCard';
@@ -203,9 +202,6 @@ export default function Home() {
   }, [resolvedActiveCategory, bestSellerProducts]);
 
   const heroBackgroundImage = content.hero_background_url?.trim() || '';
-  const optimizedHeroBackgroundImage = getOptimizedCloudinaryUrl(heroBackgroundImage, {
-    width: 1920,
-  });
 
   const [loadedHeroImage, setLoadedHeroImage] = useState('');
 
@@ -267,7 +263,7 @@ export default function Home() {
 
     image.onload = handleLoad;
     image.onerror = handleError;
-    image.src = optimizedHeroBackgroundImage;
+    image.src = heroBackgroundImage;
 
     if (image.complete && image.naturalWidth > 0) {
       handleLoad();
@@ -278,7 +274,7 @@ export default function Home() {
       image.onload = null;
       image.onerror = null;
     };
-  }, [heroBackgroundImage, optimizedHeroBackgroundImage]);
+  }, [heroBackgroundImage]);
 
   return (
     <main>
@@ -288,7 +284,7 @@ export default function Home() {
             key={heroBackgroundImage}
             className="hero-background-image"
             style={{
-              backgroundImage: `url("${optimizedHeroBackgroundImage}")`,
+              backgroundImage: `url("${heroBackgroundImage}")`,
             }}
             initial={{
               opacity: 0,
@@ -536,6 +532,21 @@ export default function Home() {
               </p>
             </form>
           </motion.aside>
+
+          <a
+            className="hero-mobile-quick-quote"
+            href={`https://wa.me/${normalizeWhatsAppNumber(
+              content.whatsapp_number?.trim() ||
+                content.footer_phone?.trim() ||
+                '+6285640100044',
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <MessageCircleMore size={18} />
+            Jalur Cepat via WhatsApp
+            <ArrowUpRight size={17} />
+          </a>
         </div>
 
         <a

@@ -1,5 +1,6 @@
 type CloudinaryImageOptions = {
   width?: number;
+  quality?: 'auto' | 'auto:best';
 };
 
 export function getOptimizedCloudinaryUrl(
@@ -16,7 +17,7 @@ export function getOptimizedCloudinaryUrl(
     const uploadMarker = '/upload/';
     if (!url.pathname.includes(uploadMarker)) return value;
 
-    const transformations = ['f_auto', 'q_auto'];
+    const transformations = ['f_auto', `q_${options.quality ?? 'auto'}`];
     if (options.width && Number.isFinite(options.width)) {
       transformations.push(`w_${Math.max(1, Math.round(options.width))}`, 'c_limit');
     }

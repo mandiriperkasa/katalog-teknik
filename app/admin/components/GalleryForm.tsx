@@ -6,6 +6,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
+import { cleanupCloudinaryUploads } from '@/lib/cleanup-cloudinary-upload';
+
 type MediaType = 'image' | 'youtube';
 
 type GalleryFormProps = {
@@ -106,6 +108,7 @@ export default function GalleryForm({ mode, initialData }: GalleryFormProps) {
 
     setLoading(true);
     setError('');
+    let newPublicId = '';
 
     try {
       if (!title.trim()) {
@@ -153,6 +156,7 @@ export default function GalleryForm({ mode, initialData }: GalleryFormProps) {
         imageUrl = uploadResult.url;
 
         imagePublicId = uploadResult.publicId;
+        newPublicId = uploadResult.publicId;
       }
 
       if (mediaType === 'image' && !imageUrl) {
@@ -193,6 +197,7 @@ export default function GalleryForm({ mode, initialData }: GalleryFormProps) {
 
       window.location.href = '/admin/gallery';
     } catch (error) {
+      await cleanupCloudinaryUploads([newPublicId]);
       setError(error instanceof Error ? error.message : 'Terjadi kesalahan.');
     } finally {
       setLoading(false);

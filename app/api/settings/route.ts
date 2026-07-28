@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import cloudinary from '../../../lib/cloudinary';
 import { getDatabase } from '../../../lib/database/neon';
 import { isAdminAuthenticated } from '../../../lib/require-admin';
 
@@ -15,6 +16,38 @@ const updateSettingSchema = z.object({
     .max(100, 'Key pengaturan terlalu panjang.'),
   value: z.string().max(10000, 'Nilai pengaturan terlalu panjang.'),
 });
+
+const imageSettingFolders: Partial<Record<string, string[]>> = {
+  hero_background_url: ['katalog-teknik/hero/', 'katalog-teknik/products/'],
+  header_brand_logo_url: ['katalog-teknik/logos/', 'katalog-teknik/products/'],
+};
+
+function getCloudinaryPublicId(value: string | null | undefined, allowedFolders: string[]) {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.hostname !== 'res.cloudinary.com') return null;
+
+    const segments = url.pathname.split('/').filter(Boolean);
+    const uploadIndex = segments.indexOf('upload');
+    if (uploadIndex < 0) return null;
+
+    const afterUpload = segments.slice(uploadIndex + 1);
+    const versionIndex = afterUpload.findIndex((segment) => /^v\d+$/.test(segment));
+    if (versionIndex < 0) return null;
+
+    const publicId = afterUpload
+      .slice(versionIndex + 1)
+      .map((segment) => decodeURIComponent(segment))
+      .join('/')
+      .replace(/\.[^/.]+$/, '');
+
+    return allowedFolders.some((folder) => publicId.startsWith(folder)) ? publicId : null;
+  } catch {
+    return null;
+  }
+}
 
 export async function GET() {
   try {
@@ -71,6 +104,13 @@ export async function PUT(request: NextRequest) {
 
     const { key, value } = parsed.data;
     const sql = getDatabase();
+    const previousRows = (await sql`
+      SELECT value
+      FROM settings
+      WHERE key = ${key}
+      LIMIT 1
+    `) as Array<{ value: string | null }>;
+    const previousValue = previousRows[0]?.value ?? '';
 
     await sql`
       INSERT INTO settings (
@@ -88,6 +128,23 @@ export async function PUT(request: NextRequest) {
         value = EXCLUDED.value,
         updated_at = NOW()
     `;
+
+    const allowedFolders = imageSettingFolders[key];
+    if (allowedFolders && previousValue !== value) {
+      const previousPublicId = getCloudinaryPublicId(previousValue, allowedFolders);
+      const nextPublicId = getCloudinaryPublicId(value, allowedFolders);
+
+      if (previousPublicId && previousPublicId !== nextPublicId) {
+        try {
+          await cloudinary.uploader.destroy(previousPublicId, {
+            invalidate: true,
+            resource_type: 'image',
+          });
+        } catch (deleteError) {
+          console.error(`Gagal menghapus aset Cloudinary lama untuk ${key}:`, deleteError);
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,

@@ -20,6 +20,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { cleanupCloudinaryUploads } from '@/lib/cleanup-cloudinary-upload';
+
 type ProductData = {
   id?: number | string;
   name: string;
@@ -427,6 +429,8 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
 
     if (loading) return;
 
+    const newPublicIds: string[] = [];
+
     try {
       setLoading(true);
       setMessage('');
@@ -452,9 +456,16 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
         }
       }
 
-      const uploadedImages = await Promise.all(
-        imageSlots.map((slot, index) => uploadImageSlot(slot, index)),
-      );
+      const uploadedImages: UploadResult[] = [];
+
+      for (const [index, slot] of imageSlots.entries()) {
+        const uploadedImage = await uploadImageSlot(slot, index);
+        uploadedImages.push(uploadedImage);
+
+        if (slot.file && uploadedImage.publicId) {
+          newPublicIds.push(uploadedImage.publicId);
+        }
+      }
 
       const payload = {
         name: form.name.trim(),
@@ -501,6 +512,7 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
       router.push('/admin/products');
       router.refresh();
     } catch (error) {
+      await cleanupCloudinaryUploads(newPublicIds);
       setMessage(error instanceof Error ? error.message : 'Terjadi kesalahan.');
     } finally {
       setLoading(false);

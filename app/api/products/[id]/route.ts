@@ -195,6 +195,27 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     }
 
     const sql = getDatabase();
+    let promotionPublicIds: Array<string | null> = [];
+
+    try {
+      const promotionRows = (await sql`
+        SELECT
+          image_public_id AS "imagePublicId",
+          mobile_image_public_id AS "mobileImagePublicId"
+        FROM product_promotions
+        WHERE product_id = ${productId}
+      `) as unknown as Array<{
+        imagePublicId: string | null;
+        mobileImagePublicId: string | null;
+      }>;
+
+      promotionPublicIds = promotionRows.flatMap((promotion) => [
+        promotion.imagePublicId,
+        promotion.mobileImagePublicId,
+      ]);
+    } catch (promotionLookupError) {
+      console.warn('Data aset promosi lama tidak dapat diperiksa:', promotionLookupError);
+    }
 
     await sql`
       DELETE FROM products
@@ -206,6 +227,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       product.imagePublicId2,
       product.imagePublicId3,
       product.imagePublicId4,
+      ...promotionPublicIds,
     ]);
 
     return NextResponse.json({ success: true });

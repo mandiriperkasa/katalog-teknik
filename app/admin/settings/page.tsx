@@ -698,6 +698,8 @@ export default function SettingsPage() {
                         kind={imageUploadKind}
                         label={formatLabel(setting.key)}
                         value={value}
+                        savedValue={originalState[setting.key] ?? ''}
+                        saving={status === 'saving'}
                         onChange={(nextValue) => handleChange(setting.key, nextValue)}
                       />
                     )}

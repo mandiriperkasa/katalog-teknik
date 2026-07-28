@@ -107,14 +107,21 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
 
     const gallery = rows[0];
 
-    if (gallery?.image_public_id) {
-      await cloudinary.uploader.destroy(gallery.image_public_id);
-    }
-
     await sql`
       DELETE FROM gallery
       WHERE id = ${id}
     `;
+
+    if (gallery?.image_public_id) {
+      try {
+        await cloudinary.uploader.destroy(gallery.image_public_id, {
+          invalidate: true,
+          resource_type: 'image',
+        });
+      } catch (deleteError) {
+        console.error('Gagal menghapus gambar gallery dari Cloudinary:', deleteError);
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -195,6 +202,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       try {
         await cloudinary.uploader.destroy(oldImagePublicId, {
           invalidate: true,
+          resource_type: 'image',
         });
       } catch (deleteError) {
         console.error('Gagal menghapus gambar gallery lama:', deleteError);

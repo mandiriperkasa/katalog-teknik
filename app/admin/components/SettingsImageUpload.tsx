@@ -6,7 +6,9 @@ import {
   Trash2,
   UploadCloud,
 } from 'lucide-react';
-import { type ChangeEvent, useId, useRef, useState } from 'react';
+import { type ChangeEvent, useEffect, useId, useRef, useState } from 'react';
+
+import { cleanupCloudinaryUploads } from '@/lib/cleanup-cloudinary-upload';
 
 type UploadKind = 'hero' | 'logo';
 
@@ -20,6 +22,8 @@ type SettingsImageUploadProps = {
   kind: UploadKind;
   label: string;
   value: string;
+  savedValue: string;
+  saving: boolean;
   onChange: (value: string) => void;
 };
 
@@ -55,13 +59,35 @@ export default function SettingsImageUpload({
   kind,
   label,
   value,
+  savedValue,
+  saving,
   onChange,
 }: SettingsImageUploadProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const pendingPublicIdRef = useRef('');
+  const savingRef = useRef(saving);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const copy = COPY[kind];
+
+  useEffect(() => {
+    if (value === savedValue) {
+      pendingPublicIdRef.current = '';
+    }
+  }, [savedValue, value]);
+
+  useEffect(() => {
+    savingRef.current = saving;
+  }, [saving]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingPublicIdRef.current && !savingRef.current) {
+        void cleanupCloudinaryUploads([pendingPublicIdRef.current], true);
+      }
+    };
+  }, []);
 
   async function handleFile(file: File | undefined) {
     if (!file || uploading) return;
@@ -94,6 +120,11 @@ export default function SettingsImageUpload({
         throw new Error(result.message || 'Upload gambar ke Cloudinary gagal.');
       }
 
+      if (pendingPublicIdRef.current && pendingPublicIdRef.current !== result.publicId) {
+        await cleanupCloudinaryUploads([pendingPublicIdRef.current]);
+      }
+
+      pendingPublicIdRef.current = result.publicId || '';
       onChange(result.url);
     } catch (uploadError) {
       setError(
@@ -184,6 +215,10 @@ export default function SettingsImageUpload({
             disabled={uploading}
             onClick={() => {
               setError('');
+              if (pendingPublicIdRef.current) {
+                void cleanupCloudinaryUploads([pendingPublicIdRef.current]);
+                pendingPublicIdRef.current = '';
+              }
               onChange('');
             }}
             className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-red-300/10 bg-red-400/[0.055] px-4 text-xs font-semibold text-red-200 transition hover:bg-red-400/[0.1] disabled:cursor-not-allowed disabled:opacity-50"

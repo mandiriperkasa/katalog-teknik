@@ -16,6 +16,8 @@ import {
 import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { cleanupCloudinaryUploads } from '@/lib/cleanup-cloudinary-upload';
+
 type PartnerRow = {
   id: string;
   nama: string;
@@ -156,7 +158,10 @@ export default function PartnersPage() {
       throw new Error(result.message || 'Logo gagal diunggah.');
     }
 
-    return String(result.url);
+    return {
+      url: String(result.url),
+      publicId: String(result.publicId || ''),
+    };
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -176,9 +181,12 @@ export default function PartnersPage() {
 
     setSaving(true);
     setError('');
+    let newPublicId = '';
 
     try {
-      const urlLogo = file ? await uploadLogo(file) : form.urlLogo;
+      const uploadedLogo = file ? await uploadLogo(file) : null;
+      const urlLogo = uploadedLogo?.url || form.urlLogo;
+      newPublicId = uploadedLogo?.publicId || '';
       const isEdit = Boolean(form.id);
       const response = await fetch(isEdit ? `/api/partners/${form.id}` : '/api/partners', {
         method: isEdit ? 'PUT' : 'POST',
@@ -199,6 +207,7 @@ export default function PartnersPage() {
       resetForm();
       await loadPartners();
     } catch (submitError) {
+      await cleanupCloudinaryUploads([newPublicId]);
       setError(submitError instanceof Error ? submitError.message : 'Data mitra gagal disimpan.');
     } finally {
       setSaving(false);
