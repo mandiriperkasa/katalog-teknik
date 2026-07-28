@@ -2232,6 +2232,15 @@ html[data-site-theme='dark'] .map-card iframe {
   transition: all 180ms ease;
 }
 
+.footer-social-link > svg {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.footer-marketplace-glyph {
+  overflow: visible;
+}
+
 .footer-social-link:hover {
   border-color: var(--border-strong);
   color: var(--accent-blue);

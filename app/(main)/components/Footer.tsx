@@ -49,12 +49,13 @@ function SocialGlyph({ kind }: { kind: SocialKind }) {
   if (kind === 'tokopedia') {
     return (
       <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
+        className="footer-marketplace-glyph"
+        width="21"
+        height="21"
+        viewBox="3 4 18 18"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="2.1"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
@@ -71,12 +72,13 @@ function SocialGlyph({ kind }: { kind: SocialKind }) {
   if (kind === 'tiktok-shop') {
     return (
       <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
+        className="footer-marketplace-glyph"
+        width="21"
+        height="21"
+        viewBox="3 4 18 18"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="2.1"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
