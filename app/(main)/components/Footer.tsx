@@ -14,16 +14,35 @@ type SocialKind = 'tiktok' | 'facebook' | 'youtube' | 'instagram' | 'tokopedia' 
 function SocialGlyph({ kind }: { kind: SocialKind }) {
   if (kind === 'facebook') {
     return (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073c0 6.026 4.388 11.02 10.125 11.927v-8.437H7.078v-3.49h3.047V9.414c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97H15.83c-1.491 0-1.956.93-1.956 1.885v2.265h3.328l-.532 3.49h-2.796V24C19.612 23.093 24 18.1 24 12.073z" />
+      <svg
+        className="footer-social-glyph"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M14 21v-8h3.2l.6-4H14V7.4c0-1.2.7-1.8 2.1-1.8H18V2.3c-.8-.2-1.8-.3-3-.3-3.2 0-5 2-5 5.4V9H7v4h3v8" />
       </svg>
     );
   }
 
   if (kind === 'youtube') {
     return (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M23.5 6.2a3 3 0 0 0-2.1-2.15C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.08 0 12 0 12s0 3.92.5 5.8a3 3 0 0 0 2.1 2.15c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.15c.5-1.88.5-5.8.5-5.8s0-3.92-.5-5.8zM9.55 15.57V8.43L15.82 12l-6.27 3.57z" />
+      <svg
+        className="footer-social-glyph"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="2" y="5" width="20" height="14" rx="4" />
+        <path d="m10 9 5 3-5 3V9Z" />
       </svg>
     );
   }
@@ -31,12 +50,13 @@ function SocialGlyph({ kind }: { kind: SocialKind }) {
   if (kind === 'instagram') {
     return (
       <svg
-        width="18"
-        height="18"
+        className="footer-social-glyph"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         aria-hidden="true"
       >
         <rect x="2" y="2" width="20" height="20" rx="5" />
@@ -49,22 +69,20 @@ function SocialGlyph({ kind }: { kind: SocialKind }) {
   if (kind === 'tokopedia') {
     return (
       <svg
-        className="footer-marketplace-glyph"
-        width="21"
-        height="21"
-        viewBox="3 4 18 18"
+        className="footer-social-glyph"
+        viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2.1"
+        strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
       >
-        <path d="M5 8.5h14l-1 11H6l-1-11Z" />
-        <path d="M8.5 8.5a3.5 3.5 0 0 1 7 0" />
-        <circle cx="9.5" cy="13" r="1.6" />
-        <circle cx="14.5" cy="13" r="1.6" />
-        <path d="m11 16 1 1 1-1" />
+        <path d="M3.5 7.5h17l-1.3 13h-14l-1.7-13Z" />
+        <path d="M8 7.5a4 4 0 0 1 8 0" />
+        <circle cx="9.5" cy="13" r="1.7" />
+        <circle cx="14.5" cy="13" r="1.7" />
+        <path d="m10.5 16.5 1.5 1 1.5-1" />
       </svg>
     );
   }
@@ -72,28 +90,36 @@ function SocialGlyph({ kind }: { kind: SocialKind }) {
   if (kind === 'tiktok-shop') {
     return (
       <svg
-        className="footer-marketplace-glyph"
-        width="21"
-        height="21"
-        viewBox="3 4 18 18"
+        className="footer-social-glyph"
+        viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2.1"
+        strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
       >
-        <path d="M5 9h14l-1 11H6L5 9Z" />
-        <path d="M9 9a3 3 0 0 1 6 0" />
-        <path d="M13 12v4.1a2 2 0 1 1-1.8-2" />
-        <path d="M13 12c.45 1.05 1.2 1.65 2.25 1.8" />
+        <path d="M3.5 8h17l-1.3 12.5h-14L3.5 8Z" />
+        <path d="M8 8a4 4 0 0 1 8 0" />
+        <path d="M13 11v5a2.2 2.2 0 1 1-2-2.2" />
+        <path d="M13 11c.5 1.2 1.4 2 2.8 2.2" />
       </svg>
     );
   }
 
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12.53.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.02 1.63 4.16 1.02 1.11 2.46 1.62 3.87 1.78v4.03a9.2 9.2 0 0 1-5.43-1.64c.01 2.91.01 5.82-.01 8.73-.16 3.48-3 6.47-6.47 6.78-3.47.45-6.93-1.58-8.24-4.82-1.6-3.82.28-8.54 4.12-10.1a8.18 8.18 0 0 1 4.61-.45v4.13c-1.42-.46-3.12-.06-4.03 1.16-1.13 1.4-.9 3.62.48 4.77 1.33 1.21 3.63 1.1 4.82-.25.41-.47.68-1.07.7-1.7.07-5.52-.02-11.03.04-16.56z" />
+    <svg
+      className="footer-social-glyph"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M14 3v11.5a4.5 4.5 0 1 1-4-4.5" />
+      <path d="M14 5c1.1 2.2 2.8 3.4 5 3.5" />
     </svg>
   );
 }

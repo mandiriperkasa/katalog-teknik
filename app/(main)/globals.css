@@ -2232,12 +2232,11 @@ html[data-site-theme='dark'] .map-card iframe {
   transition: all 180ms ease;
 }
 
-.footer-social-link > svg {
+.footer-social-glyph {
+  width: 20px;
+  height: 20px;
   display: block;
   flex: 0 0 auto;
-}
-
-.footer-marketplace-glyph {
   overflow: visible;
 }
 
