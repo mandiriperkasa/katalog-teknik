@@ -159,6 +159,9 @@ export async function generateMetadata({
     description:
       data.product.description?.trim().slice(0, 160) ||
       `Informasi dan penawaran ${data.product.name || 'produk teknik'} dari Mandiri Perkakas.`,
+    alternates: {
+      canonical: `/products/${encodeURIComponent(slug)}`,
+    },
   };
 }
 

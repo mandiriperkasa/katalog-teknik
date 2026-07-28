@@ -22,6 +22,7 @@ const metadataFallback = {
   siteName: 'Mandiri Perkakas',
   description: 'Katalog peralatan otomotif, hidraulis, dan perlengkapan teknik profesional.',
 };
+const SITE_URL = 'https://www.mandiriperkakas.com';
 
 export const revalidate = 60;
 
@@ -53,7 +54,7 @@ async function getMetadataSettings() {
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getMetadataSettings();
 
-    const configuredSiteName = settings.general_site_name?.trim();
+  const configuredSiteName = settings.general_site_name?.trim();
   const siteName =
     !configuredSiteName || configuredSiteName === 'MP Katalog Teknik'
       ? metadataFallback.siteName
@@ -61,11 +62,23 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = settings.general_meta_description?.trim() || metadataFallback.description;
 
   return {
+    metadataBase: new URL(SITE_URL),
     title: {
       default: siteName,
       template: `%s | ${siteName}`,
     },
     description,
+    alternates: {
+      canonical: '/',
+    },
+    openGraph: {
+      type: 'website',
+      locale: 'id_ID',
+      url: '/',
+      siteName,
+      title: siteName,
+      description,
+    },
   };
 }
 

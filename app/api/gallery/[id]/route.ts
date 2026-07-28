@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getDatabase } from '@/lib/database/neon';
+import { galleryPayloadSchema } from '@/lib/gallery-payload';
 import { isAdminAuthenticated } from '@/lib/require-admin';
 import cloudinary from '@/lib/cloudinary';
 
@@ -157,9 +158,21 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
 
     const body = await request.json();
+    const parsed = galleryPayloadSchema.safeParse(body);
 
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          message: parsed.error.issues[0]?.message || 'Data gallery tidak valid.',
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const data = parsed.data;
     const sql = getDatabase();
-
     const existingRows = (await sql`
       SELECT image_public_id
       FROM gallery
@@ -171,33 +184,33 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const oldImagePublicId = existingRows[0]?.image_public_id ?? null;
 
-    await sql`
+    const updatedRows = (await sql`
       UPDATE gallery
       SET
-        title = ${body.title},
-        category =
-          ${body.category || 'Lainnya'},
-        location =
-          ${body.location || ''},
-        description =
-          ${body.description || ''},
-        media_type =
-          ${body.mediaType === 'youtube' ? 'youtube' : 'image'},
+        title = ${data.title},
+        category = ${data.category},
+        location = ${data.location},
+        description = ${data.description},
+        media_type = ${data.mediaType},
         youtube_video_id =
-          ${body.mediaType === 'youtube' ? body.youtubeVideoId || null : null},
+          ${data.mediaType === 'youtube' ? data.youtubeVideoId || null : null},
         image_url =
-          ${body.mediaType === 'image' ? body.imageUrl || null : null},
+          ${data.mediaType === 'image' ? data.imageUrl || null : null},
         image_public_id =
-          ${body.mediaType === 'image' ? body.imagePublicId || null : null},
-        sort_order =
-          ${Number(body.sortOrder) || 0},
+          ${data.mediaType === 'image' ? data.imagePublicId || null : null},
+        sort_order = ${data.sortOrder},
         updated_at = NOW()
       WHERE id = ${id}
-    `;
+      RETURNING id
+    `) as unknown as Array<{ id: string }>;
+
+    if (updatedRows.length === 0) {
+      return NextResponse.json({ message: 'Gallery tidak ditemukan.' }, { status: 404 });
+    }
 
     if (
       oldImagePublicId &&
-      oldImagePublicId !== (body.mediaType === 'image' ? body.imagePublicId || null : null)
+      oldImagePublicId !== (data.mediaType === 'image' ? data.imagePublicId || null : null)
     ) {
       try {
         await cloudinary.uploader.destroy(oldImagePublicId, {

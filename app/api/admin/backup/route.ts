@@ -6,7 +6,15 @@ import { requireSuperAdmin } from '@/lib/require-super-admin';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const BACKUP_TABLES = ['products', 'gallery', 'settings', 'social_media', 'partners'] as const;
+const BACKUP_TABLES = [
+  'products',
+  'product_promotions',
+  'gallery',
+  'settings',
+  'social_media',
+  'partners',
+] as const;
+const MAX_BACKUP_FILE_SIZE = 25 * 1024 * 1024;
 
 type BackupTable = (typeof BACKUP_TABLES)[number];
 
@@ -175,55 +183,75 @@ export async function POST(request: NextRequest) {
     if (!file.name.toLowerCase().endsWith('.xlsx')) {
       return NextResponse.json({ message: 'File harus berformat .xlsx.' }, { status: 400 });
     }
+    if (file.size > MAX_BACKUP_FILE_SIZE) {
+      return NextResponse.json({ message: 'Ukuran file backup maksimal 25MB.' }, { status: 400 });
+    }
 
-    const body = readBackupFromWorkbook(Buffer.from(await file.arrayBuffer()));
+    let body: BackupFile;
+
+    try {
+      body = readBackupFromWorkbook(Buffer.from(await file.arrayBuffer()));
+    } catch {
+      return NextResponse.json(
+        {
+          message: 'Format backup Excel tidak valid atau sheet sistem tidak ditemukan.',
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
     const sql = getDatabase();
     const found = await existingTables();
     const restored: Record<string, number> = {};
+    const operations = [];
 
     for (const table of BACKUP_TABLES) {
       const rows = body.tables[table];
       if (!found.has(table) || !Array.isArray(rows)) continue;
 
       const json = JSON.stringify(rows);
-      await sql.transaction([
-        sql.query(`DELETE FROM "${table}"`, []),
-        ...(rows.length > 0
-          ? [
-              sql.query(
-                `INSERT INTO "${table}" SELECT * FROM json_populate_recordset(NULL::"${table}", $1::json)`,
-                [json],
-              ),
-            ]
-          : []),
-      ]);
-
-      if (table === 'products') {
-        await sql`
-          SELECT setval(
-            pg_get_serial_sequence('products', 'id'),
-            COALESCE((SELECT MAX(id) FROM products), 1),
-            (SELECT COUNT(*) > 0 FROM products)
-          )
-        `;
-      }
-
-      if (table === 'partners') {
-        try {
-          await sql`
-            SELECT setval(
-              pg_get_serial_sequence('partners', 'id'),
-              COALESCE((SELECT MAX(id) FROM partners), 1),
-              (SELECT COUNT(*) > 0 FROM partners)
-            )
-          `;
-        } catch {
-          // Abaikan jika id partners bukan serial.
-        }
+      operations.push(sql.query(`DELETE FROM "${table}"`, []));
+      if (rows.length > 0) {
+        operations.push(
+          sql.query(
+            `INSERT INTO "${table}" SELECT * FROM json_populate_recordset(NULL::"${table}", $1::json)`,
+            [json],
+          ),
+        );
       }
 
       restored[table] = rows.length;
     }
+
+    if (found.has('products')) {
+      operations.push(
+        sql.query(
+          `SELECT setval(
+            pg_get_serial_sequence('products', 'id'),
+            COALESCE((SELECT MAX(id) FROM products), 1),
+            (SELECT COUNT(*) > 0 FROM products)
+          )`,
+          [],
+        ),
+      );
+    }
+
+    if (found.has('partners')) {
+      operations.push(
+        sql.query(
+          `SELECT setval(
+            pg_get_serial_sequence('partners', 'id'),
+            COALESCE((SELECT MAX(id) FROM partners), 1),
+            (SELECT COUNT(*) > 0 FROM partners)
+          )`,
+          [],
+        ),
+      );
+    }
+
+    await sql.transaction(operations);
 
     return NextResponse.json({ success: true, restored });
   } catch (error) {

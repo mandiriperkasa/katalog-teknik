@@ -943,6 +943,7 @@ export default function ProductsPage() {
                 <input
                   type="search"
                   className="site-input"
+                  aria-label={getContent('products_search_label', 'Cari produk')}
                   value={searchDraft}
                   onChange={(event) => setSearchDraft(event.target.value)}
                   placeholder={getContent(

@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 import { getProductSlug, type ProductRow } from '@/app/(main)/products/product';
 import { getDatabase } from '@/lib/database/neon';
 
-const SITE_URL = 'https://mandiriperkakas.com';
+const SITE_URL = 'https://www.mandiriperkakas.com';
 
 type SitemapProduct = ProductRow & {
   id: number;

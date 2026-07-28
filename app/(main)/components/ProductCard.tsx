@@ -77,7 +77,7 @@ export default function ProductCard({
         </div>
         {product.imageUrl ? (
           <Image
-            src={getOptimizedCloudinaryUrl(product.imageUrl, { width: 900 })}
+            src={getOptimizedCloudinaryUrl(product.imageUrl, { width: 640 })}
             alt={product.name || getContent('products_product_image_alt', 'Produk teknik')}
             fill
             unoptimized={isCloudinaryUrl(product.imageUrl)}

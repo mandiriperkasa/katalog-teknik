@@ -3,6 +3,8 @@
 import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
 import { ArrowUpRight, Menu, X } from 'lucide-react';
 import Link from 'next/link';
+
+import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import ThemeToggle from './ThemeToggle';
@@ -111,7 +113,10 @@ export default function Header() {
                 // URL logo berasal dari Cloudinary melalui dashboard admin.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={getContent('header_brand_logo_url', '')}
+                  src={getOptimizedCloudinaryUrl(getContent('header_brand_logo_url', ''), {
+                    width: 160,
+                    quality: 'auto:best',
+                  })}
                   alt=""
                   className="brand-logo-image"
                 />

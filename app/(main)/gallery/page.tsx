@@ -261,7 +261,7 @@ export default function GalleryPage() {
                   </>
                 ) : item.imageUrl ? (
                   <Image
-                    src={getOptimizedCloudinaryUrl(item.imageUrl, { width: 1400 })}
+                    src={getOptimizedCloudinaryUrl(item.imageUrl, { width: 1000 })}
                     alt={item.title || 'Dokumentasi workshop'}
                     fill
                     unoptimized={isCloudinaryUrl(item.imageUrl)}

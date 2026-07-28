@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getDatabase } from '@/lib/database/neon';
+import { galleryPayloadSchema } from '@/lib/gallery-payload';
 import { isAdminAuthenticated } from '@/lib/require-admin';
 
 export const runtime = 'nodejs';
@@ -56,9 +57,21 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    const parsed = galleryPayloadSchema.safeParse(body);
 
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          message: parsed.error.issues[0]?.message || 'Data gallery tidak valid.',
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const data = parsed.data;
     const sql = getDatabase();
-
     const result = (await sql`
 INSERT INTO gallery (
   id,
@@ -76,15 +89,15 @@ INSERT INTO gallery (
 )
 VALUES (
   ${crypto.randomUUID()},
-  ${body.title},
-  ${body.category || ''},
-  ${body.location || ''},
-  ${body.description || ''},
-  ${body.mediaType === 'youtube' ? 'youtube' : 'image'},
-  ${body.mediaType === 'youtube' ? body.youtubeVideoId || null : null},
-  ${body.mediaType === 'image' ? body.imageUrl || null : null},
-  ${body.mediaType === 'image' ? body.imagePublicId || null : null},
-  ${Number(body.sortOrder) || 0},
+  ${data.title},
+  ${data.category},
+  ${data.location},
+  ${data.description},
+  ${data.mediaType},
+  ${data.mediaType === 'youtube' ? data.youtubeVideoId || null : null},
+  ${data.mediaType === 'image' ? data.imageUrl || null : null},
+  ${data.mediaType === 'image' ? data.imagePublicId || null : null},
+  ${data.sortOrder},
   NOW(),
   NOW()
 )

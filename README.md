@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Katalog Teknik Mandiri Perkakas
 
-## Getting Started
+Aplikasi katalog produk dan panel administrasi Mandiri Perkakas, dibangun dengan Next.js,
+React, Neon PostgreSQL, Drizzle ORM, dan Cloudinary.
 
-First, run the development server:
+## Prasyarat
+
+- Node.js 20 atau versi LTS yang lebih baru
+- npm
+- Database Neon PostgreSQL
+- Akun Cloudinary
+
+## Instalasi
+
+```bash
+npm ci
+```
+
+Salin `.env.example` menjadi `.env.local`, lalu isi variabel berikut:
+
+```text
+DATABASE_URL
+ADMIN_EMAIL
+ADMIN_PASSWORD_HASH
+ADMIN_AUTH_SECRET
+CLOUDINARY_CLOUD_NAME
+CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET
+```
+
+Jangan menyimpan `.env.local`, password, hash produksi, token, atau connection string di Git,
+spreadsheet, maupun dokumentasi publik.
+
+Untuk membuat hash password admin:
+
+```bash
+npm run auth:hash-password -- "password-yang-kuat"
+```
+
+## Menjalankan Aplikasi
+
+Development:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Validasi sebelum commit:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Production lokal:
 
-## Learn More
+```bash
+npm run start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Database
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Skema aplikasi didefinisikan dengan Drizzle pada `db/schema.ts`. SQL tambahan yang bersifat
+idempotent tersedia di folder `database/` dan `app/database/`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Perintah Drizzle:
 
-## Deploy on Vercel
+```bash
+npm run db:generate
+npm run db:migrate
+npm run db:push
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Jalankan perubahan skema pada database staging terlebih dahulu. Pastikan `DATABASE_URL` Preview
+dan Production di Vercel tidak menunjuk ke database yang sama bila pengujian melibatkan restore
+atau penghapusan data.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Backup dan Restore
+
+Backup tersedia untuk super admin melalui menu **Admin > Backup**. File Excel menyimpan data
+konten utama beserta sheet sistem yang diperlukan untuk restore.
+
+Restore bersifat mengganti data tabel yang tercakup dan dijalankan secara atomik. Selalu:
+
+1. Unduh backup terbaru.
+2. Uji restore pada database staging.
+3. Bandingkan jumlah record dan sampel data.
+4. Lakukan restore produksi hanya setelah hasil staging terverifikasi.
+
+Akun admin dan analytics tidak disertakan dalam backup konten.
+
+## Deployment
+
+Branch release adalah `katalog-web`. Sebelum deploy:
+
+1. Pastikan lint, TypeScript, dan build berhasil.
+2. Pastikan working tree bersih.
+3. Push commit ke `mandiriperkasa/katalog-teknik`.
+4. Verifikasi environment Vercel untuk scope Production.
+5. Periksa runtime logs dan endpoint penting setelah deployment.
+
+## Rollback
+
+Catat commit deployment yang disetujui. Untuk rollback aplikasi, redeploy commit terakhir yang
+stabil melalui Vercel. Rollback source tidak mengembalikan perubahan database; gunakan backup
+terverifikasi bila pemulihan data diperlukan.
+
+## Keamanan
+
+- Semua endpoint tulis dibatasi dan memerlukan autentikasi sesuai perannya.
+- Upload hanya menerima JPG, PNG, atau WebP dengan batas ukuran.
+- Credential Cloudinary dan database hanya digunakan pada server.
+- Route admin tidak boleh diindeks mesin pencari.
+- Rotasi credential segera jika pernah disimpan atau dibagikan dalam bentuk plaintext.
