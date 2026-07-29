@@ -25,21 +25,39 @@ export default function ProductVariantSelector({
   const firstAvailableIndex = variants.findIndex((variant) => variant.isAvailable);
   const [selectedIndex, setSelectedIndex] = useState(firstAvailableIndex);
   const selectedVariant = selectedIndex >= 0 ? variants[selectedIndex] : undefined;
+  const hasSelectedVariant = Boolean(selectedVariant);
+  const hasExplicitVariantDiscount =
+    hasSelectedVariant && typeof selectedVariant?.hasDiscount === 'boolean';
   const hasVariantPrice = getNumericPrice(selectedVariant?.price) > 0;
-  const displayedPrice = hasVariantPrice ? selectedVariant?.price : price;
-  const showBaseDiscount = !hasVariantPrice && hasDiscount;
+  const originalPrice = hasVariantPrice ? getNumericPrice(selectedVariant?.price) : price;
+  const basePrice = getNumericPrice(price);
+  const baseDiscountPrice = getNumericPrice(discountPrice);
+  const discountRatio =
+    hasDiscount && basePrice > 0 && baseDiscountPrice > 0 ? baseDiscountPrice / basePrice : 1;
+  const selectedHasDiscount = hasExplicitVariantDiscount
+    ? selectedVariant?.hasDiscount === true
+    : hasDiscount;
+  const displayedDiscountPrice = hasExplicitVariantDiscount
+    ? selectedVariant?.discountPrice
+    : hasVariantPrice
+      ? Math.round(getNumericPrice(selectedVariant?.price) * discountRatio)
+      : discountPrice;
+  const showDiscount =
+    selectedHasDiscount &&
+    getNumericPrice(displayedDiscountPrice) > 0 &&
+    getNumericPrice(displayedDiscountPrice) < getNumericPrice(originalPrice);
 
   return (
     <>
       <div className="product-detail-price" aria-live="polite">
-        {showBaseDiscount ? (
+        {showDiscount ? (
           <>
-            <strong>{formatCurrency(discountPrice)}</strong>
-            <span>{formatCurrency(price)}</span>
-            <em>-{getDiscountPercent(price, discountPrice)}%</em>
+            <strong>{formatCurrency(displayedDiscountPrice)}</strong>
+            <span>{formatCurrency(originalPrice)}</span>
+            <em>-{getDiscountPercent(originalPrice, displayedDiscountPrice)}%</em>
           </>
         ) : (
-          <strong>{formatCurrency(displayedPrice)}</strong>
+          <strong>{formatCurrency(originalPrice)}</strong>
         )}
       </div>
 

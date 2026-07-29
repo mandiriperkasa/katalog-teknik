@@ -54,6 +54,8 @@ type ProductData = {
 type ProductVariant = {
   name: string;
   price?: number | '' | null;
+  hasDiscount?: boolean;
+  discountPrice?: number | '' | null;
   isAvailable: boolean;
 };
 
@@ -331,16 +333,39 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
     tokopediaUrl: initialData?.tokopediaUrl || '',
     tiktokShopUrl: initialData?.tiktokShopUrl || '',
     variants: Array.isArray(initialData?.variants)
-      ? initialData.variants.map((variant) => ({
-          name: String(variant.name ?? ''),
-          price:
+      ? initialData.variants.map((variant) => {
+          const variantPrice =
             Number(variant.price) > 0
               ? Number(variant.price)
               : Number(initialData.price) > 0
                 ? Number(initialData.price)
-                : '',
-          isAvailable: variant.isAvailable !== false,
-        }))
+                : '';
+          const hasExplicitDiscount = typeof variant.hasDiscount === 'boolean';
+          const hasVariantDiscount = hasExplicitDiscount
+            ? variant.hasDiscount === true
+            : Boolean(initialData.hasDiscount);
+          const fallbackDiscountPrice =
+            !hasExplicitDiscount &&
+            Number(initialData.price) > 0 &&
+            Number(initialData.discountPrice) > 0 &&
+            Number(variantPrice) > 0
+              ? Math.round(
+                  (Number(variantPrice) * Number(initialData.discountPrice)) /
+                    Number(initialData.price),
+                )
+              : '';
+
+          return {
+            name: String(variant.name ?? ''),
+            price: variantPrice,
+            hasDiscount: hasVariantDiscount,
+            discountPrice:
+              Number(variant.discountPrice) > 0
+                ? Number(variant.discountPrice)
+                : fallbackDiscountPrice,
+            isAvailable: variant.isAvailable !== false,
+          };
+        })
       : [],
     isBestSeller: Boolean(initialData?.isBestSeller),
     isPromotion: Boolean(initialData?.isPromotion),
@@ -367,6 +392,8 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
           {
             name: '',
             price: current.price === '' ? '' : Number(current.price),
+            hasDiscount: false,
+            discountPrice: '',
             isAvailable: true,
           },
         ],
@@ -515,6 +542,19 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
       ) {
         throw new Error('Setiap varian yang diberi nama wajib memiliki harga.');
       }
+      if (
+        (form.variants ?? []).some((variant) => {
+          if (!variant.name.trim() || !variant.hasDiscount) return false;
+
+          const variantPrice = Number(variant.price) || 0;
+          const variantDiscountPrice = Number(variant.discountPrice) || 0;
+          return variantDiscountPrice <= 0 || variantDiscountPrice >= variantPrice;
+        })
+      ) {
+        throw new Error(
+          'Harga diskon setiap varian harus lebih besar dari 0 dan lebih kecil dari harga normalnya.',
+        );
+      }
 
       const uploadedImages: UploadResult[] = [];
 
@@ -553,6 +593,8 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
           .map((variant) => ({
             name: variant.name.trim(),
             price: Number(variant.price) || null,
+            hasDiscount: Boolean(variant.hasDiscount),
+            discountPrice: variant.hasDiscount ? Number(variant.discountPrice) || null : null,
             isAvailable: variant.isAvailable,
           }))
           .filter((variant) => variant.name),
@@ -738,7 +780,7 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
                 <h3 className="text-sm font-semibold text-slate-100">Varian produk</h3>
                 <p className="mt-1 text-xs leading-5 text-slate-400">
                   Opsional. Tambahkan pilihan ukuran, tipe, warna, atau isi kemasan beserta harga
-                  masing-masing.
+                  dan diskon masing-masing.
                 </p>
               </div>
               <button
@@ -756,7 +798,7 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
                 {form.variants?.map((variant, index) => (
                   <div
                     key={index}
-                    className="grid gap-3 rounded-xl border border-white/[0.07] bg-slate-950/20 p-3 lg:grid-cols-[minmax(0,1fr)_220px_auto_auto] lg:items-end"
+                    className="grid gap-3 rounded-xl border border-white/[0.07] bg-slate-950/20 p-3 md:grid-cols-2 md:items-end xl:grid-cols-[minmax(0,1fr)_190px_190px_auto_auto]"
                   >
                     <label className="grid gap-1.5 text-xs font-medium text-slate-300">
                       Nama varian
@@ -769,7 +811,7 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
                       />
                     </label>
                     <label className="grid gap-1.5 text-xs font-medium text-slate-300">
-                      Harga varian
+                      Harga normal
                       <input
                         className="admin-input"
                         type="text"
@@ -781,6 +823,36 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
                         }
                       />
                     </label>
+                    <div className="grid gap-1.5">
+                      <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-300">
+                        <input
+                          type="checkbox"
+                          checked={variant.hasDiscount === true}
+                          onChange={(event) =>
+                            updateVariant(index, {
+                              hasDiscount: event.target.checked,
+                              discountPrice: event.target.checked ? variant.discountPrice : '',
+                            })
+                          }
+                          className="h-3.5 w-3.5 rounded border-white/20 accent-rose-500"
+                        />
+                        Harga diskon
+                      </label>
+                      <input
+                        className="admin-input disabled:cursor-not-allowed disabled:opacity-45"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Rp0"
+                        disabled={!variant.hasDiscount}
+                        aria-label={`Harga diskon varian ${variant.name || index + 1}`}
+                        value={formatRupiah(variant.discountPrice)}
+                        onChange={(event) =>
+                          updateVariant(index, {
+                            discountPrice: parseRupiah(event.target.value),
+                          })
+                        }
+                      />
+                    </div>
                     <label className="inline-flex h-11 cursor-pointer items-center gap-2 px-1 text-xs font-medium text-slate-300">
                       <input
                         type="checkbox"

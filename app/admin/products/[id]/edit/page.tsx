@@ -26,6 +26,8 @@ type ProductData = {
   variants?: Array<{
     name: string;
     price?: number | null;
+    hasDiscount?: boolean;
+    discountPrice?: number | null;
     isAvailable: boolean;
   }>;
   isPromotion?: boolean;

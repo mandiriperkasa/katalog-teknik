@@ -37,6 +37,8 @@ type ProductPayload = {
   variants?: Array<{
     name?: string;
     price?: number | null;
+    hasDiscount?: boolean;
+    discountPrice?: number | null;
     isAvailable?: boolean;
   }>;
   isBestSeller?: boolean;
@@ -70,6 +72,8 @@ type ProductRecord = {
   variants: Array<{
     name: string;
     price?: number | null;
+    hasDiscount?: boolean;
+    discountPrice?: number | null;
     isAvailable: boolean;
   }>;
   isVisible: boolean;
@@ -111,6 +115,11 @@ function normalizeVariants(value: ProductPayload['variants']) {
         .trim()
         .slice(0, 80),
       price: Number(variant?.price) > 0 ? Number(variant?.price) : null,
+      hasDiscount: variant?.hasDiscount === true,
+      discountPrice:
+        variant?.hasDiscount === true && Number(variant?.discountPrice) > 0
+          ? Number(variant?.discountPrice)
+          : null,
       isAvailable: variant?.isAvailable !== false,
     }))
     .filter((variant) => variant.name.length > 0);
@@ -377,6 +386,20 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const tokopediaUrl = normalizeOptionalWebUrl(body.tokopediaUrl);
     const tiktokShopUrl = normalizeOptionalWebUrl(body.tiktokShopUrl);
     const variants = normalizeVariants(body.variants);
+
+    if (
+      variants.some(
+        (variant) =>
+          variant.hasDiscount &&
+          (Number(variant.discountPrice) <= 0 ||
+            Number(variant.discountPrice) >= Number(variant.price)),
+      )
+    ) {
+      return NextResponse.json(
+        { message: 'Harga diskon varian harus lebih kecil dari harga normal varian.' },
+        { status: 400 },
+      );
+    }
 
     if (String(body.tokopediaUrl ?? '').trim() && !tokopediaUrl) {
       return NextResponse.json({ message: 'URL Tokopedia tidak valid.' }, { status: 400 });

@@ -31,11 +31,28 @@ const optionalMarketplaceUrl = z
   .transform((value) => value ?? '');
 const productVariantsSchema = z
   .array(
-    z.object({
-      name: z.string().trim().min(1).max(80),
-      price: z.coerce.number().positive().nullable().optional(),
-      isAvailable: z.boolean().default(true),
-    }),
+    z
+      .object({
+        name: z.string().trim().min(1).max(80),
+        price: z.coerce.number().positive().nullable().optional(),
+        hasDiscount: z.boolean().default(false),
+        discountPrice: z.coerce.number().positive().nullable().optional(),
+        isAvailable: z.boolean().default(true),
+      })
+      .superRefine((variant, context) => {
+        if (!variant.hasDiscount) return;
+
+        const price = Number(variant.price) || 0;
+        const discountPrice = Number(variant.discountPrice) || 0;
+
+        if (discountPrice <= 0 || discountPrice >= price) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['discountPrice'],
+            message: 'Harga diskon varian harus lebih kecil dari harga normal varian.',
+          });
+        }
+      }),
   )
   .max(20)
   .default([]);
