@@ -33,6 +33,7 @@ const productVariantsSchema = z
   .array(
     z.object({
       name: z.string().trim().min(1).max(80),
+      price: z.coerce.number().positive().nullable().optional(),
       isAvailable: z.boolean().default(true),
     }),
   )

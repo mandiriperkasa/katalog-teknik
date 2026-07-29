@@ -26,6 +26,7 @@ export type ProductRow = {
 
 export type ProductVariant = {
   name: string;
+  price?: number | null;
   isAvailable: boolean;
 };
 

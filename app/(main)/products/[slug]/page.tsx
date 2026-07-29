@@ -23,9 +23,7 @@ import ProductVariantSelector from '../../components/ProductVariantSelector';
 import SectionHeading from '../../components/SectionHeading';
 import {
   cleanCategory,
-  formatCurrency,
   formatSoldCount,
-  getDiscountPercent,
   getNumericPrice,
   getProductSlug,
   isTruthy,
@@ -258,19 +256,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               {product.legacyNo && <span>SKU: {product.legacyNo}</span>}
             </div>
 
-            <div className="product-detail-price">
-              {hasDiscount ? (
-                <>
-                  <strong>{formatCurrency(product.discountPrice)}</strong>
-                  <span>{formatCurrency(product.price)}</span>
-                  <em>-{getDiscountPercent(product.price, product.discountPrice)}%</em>
-                </>
-              ) : (
-                <strong>{formatCurrency(product.price)}</strong>
-              )}
-            </div>
-
-            <ProductVariantSelector variants={variants} />
+            <ProductVariantSelector
+              variants={variants}
+              price={product.price}
+              discountPrice={product.discountPrice}
+              hasDiscount={hasDiscount}
+            />
 
             <div className="product-detail-assurances">
               <span>

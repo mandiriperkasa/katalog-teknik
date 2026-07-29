@@ -36,6 +36,7 @@ type ProductPayload = {
   tiktokShopUrl?: string | null;
   variants?: Array<{
     name?: string;
+    price?: number | null;
     isAvailable?: boolean;
   }>;
   isBestSeller?: boolean;
@@ -68,6 +69,7 @@ type ProductRecord = {
   tiktokShopUrl: string | null;
   variants: Array<{
     name: string;
+    price?: number | null;
     isAvailable: boolean;
   }>;
   isVisible: boolean;
@@ -108,6 +110,7 @@ function normalizeVariants(value: ProductPayload['variants']) {
       name: String(variant?.name ?? '')
         .trim()
         .slice(0, 80),
+      price: Number(variant?.price) > 0 ? Number(variant?.price) : null,
       isAvailable: variant?.isAvailable !== false,
     }))
     .filter((variant) => variant.name.length > 0);

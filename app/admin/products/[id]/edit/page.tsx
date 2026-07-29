@@ -25,6 +25,7 @@ type ProductData = {
   tiktokShopUrl?: string | null;
   variants?: Array<{
     name: string;
+    price?: number | null;
     isAvailable: boolean;
   }>;
   isPromotion?: boolean;

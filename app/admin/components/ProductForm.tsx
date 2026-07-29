@@ -53,6 +53,7 @@ type ProductData = {
 
 type ProductVariant = {
   name: string;
+  price?: number | '' | null;
   isAvailable: boolean;
 };
 
@@ -332,6 +333,12 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
     variants: Array.isArray(initialData?.variants)
       ? initialData.variants.map((variant) => ({
           name: String(variant.name ?? ''),
+          price:
+            Number(variant.price) > 0
+              ? Number(variant.price)
+              : Number(initialData.price) > 0
+                ? Number(initialData.price)
+                : '',
           isAvailable: variant.isAvailable !== false,
         }))
       : [],
@@ -355,7 +362,14 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
 
       return {
         ...current,
-        variants: [...variants, { name: '', isAvailable: true }],
+        variants: [
+          ...variants,
+          {
+            name: '',
+            price: current.price === '' ? '' : Number(current.price),
+            isAvailable: true,
+          },
+        ],
       };
     });
   }
@@ -496,6 +510,11 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
           throw new Error('Harga diskon harus lebih besar dari 0 dan lebih kecil dari harga lama.');
         }
       }
+      if (
+        (form.variants ?? []).some((variant) => variant.name.trim() && Number(variant.price) <= 0)
+      ) {
+        throw new Error('Setiap varian yang diberi nama wajib memiliki harga.');
+      }
 
       const uploadedImages: UploadResult[] = [];
 
@@ -533,6 +552,7 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
         variants: (form.variants ?? [])
           .map((variant) => ({
             name: variant.name.trim(),
+            price: Number(variant.price) || null,
             isAvailable: variant.isAvailable,
           }))
           .filter((variant) => variant.name),
@@ -717,7 +737,8 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
               <div>
                 <h3 className="text-sm font-semibold text-slate-100">Varian produk</h3>
                 <p className="mt-1 text-xs leading-5 text-slate-400">
-                  Opsional. Tambahkan pilihan ukuran, tipe, warna, atau isi kemasan.
+                  Opsional. Tambahkan pilihan ukuran, tipe, warna, atau isi kemasan beserta harga
+                  masing-masing.
                 </p>
               </div>
               <button
@@ -735,17 +756,32 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
                 {form.variants?.map((variant, index) => (
                   <div
                     key={index}
-                    className="grid gap-3 rounded-xl border border-white/[0.07] bg-slate-950/20 p-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
+                    className="grid gap-3 rounded-xl border border-white/[0.07] bg-slate-950/20 p-3 lg:grid-cols-[minmax(0,1fr)_220px_auto_auto] lg:items-end"
                   >
-                    <input
-                      className="admin-input"
-                      maxLength={80}
-                      placeholder="Contoh: P100 (isi 10 pcs)"
-                      aria-label={`Nama varian ${index + 1}`}
-                      value={variant.name}
-                      onChange={(event) => updateVariant(index, { name: event.target.value })}
-                    />
-                    <label className="inline-flex cursor-pointer items-center gap-2 px-1 text-xs font-medium text-slate-300">
+                    <label className="grid gap-1.5 text-xs font-medium text-slate-300">
+                      Nama varian
+                      <input
+                        className="admin-input"
+                        maxLength={80}
+                        placeholder="Contoh: P100 (isi 10 pcs)"
+                        value={variant.name}
+                        onChange={(event) => updateVariant(index, { name: event.target.value })}
+                      />
+                    </label>
+                    <label className="grid gap-1.5 text-xs font-medium text-slate-300">
+                      Harga varian
+                      <input
+                        className="admin-input"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Rp0"
+                        value={formatRupiah(variant.price)}
+                        onChange={(event) =>
+                          updateVariant(index, { price: parseRupiah(event.target.value) })
+                        }
+                      />
+                    </label>
+                    <label className="inline-flex h-11 cursor-pointer items-center gap-2 px-1 text-xs font-medium text-slate-300">
                       <input
                         type="checkbox"
                         checked={variant.isAvailable}
@@ -759,7 +795,7 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
                     <button
                       type="button"
                       onClick={() => removeVariant(index)}
-                      className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-red-300/15 bg-red-400/[0.06] px-3 text-xs font-semibold text-red-200 transition hover:bg-red-400/[0.12]"
+                      className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-red-300/15 bg-red-400/[0.06] px-3 text-xs font-semibold text-red-200 transition hover:bg-red-400/[0.12]"
                       aria-label={`Hapus varian ${variant.name || index + 1}`}
                     >
                       <Trash2 size={14} /> Hapus

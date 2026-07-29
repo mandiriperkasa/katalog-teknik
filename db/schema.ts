@@ -11,6 +11,7 @@ import {
 
 export type ProductVariant = {
   name: string;
+  price?: number | null;
   isAvailable: boolean;
 };
 
