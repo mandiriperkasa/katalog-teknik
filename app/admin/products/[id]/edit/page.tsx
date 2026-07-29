@@ -23,6 +23,10 @@ type ProductData = {
   imagePublicId?: string;
   tokopediaUrl?: string | null;
   tiktokShopUrl?: string | null;
+  variants?: Array<{
+    name: string;
+    isAvailable: boolean;
+  }>;
   isPromotion?: boolean;
 };
 

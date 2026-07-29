@@ -8,6 +8,7 @@ import {
   ImagePlus,
   LoaderCircle,
   Move,
+  Plus,
   Save,
   ShoppingBag,
   Star,
@@ -45,8 +46,14 @@ type ProductData = {
   imagePublicId4?: string | null;
   tokopediaUrl?: string | null;
   tiktokShopUrl?: string | null;
+  variants?: ProductVariant[];
   isBestSeller?: boolean;
   isPromotion?: boolean;
+};
+
+type ProductVariant = {
+  name: string;
+  isAvailable: boolean;
 };
 
 type ProductFormProps = {
@@ -322,6 +329,12 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
     imagePublicId4: initialData?.imagePublicId4 || '',
     tokopediaUrl: initialData?.tokopediaUrl || '',
     tiktokShopUrl: initialData?.tiktokShopUrl || '',
+    variants: Array.isArray(initialData?.variants)
+      ? initialData.variants.map((variant) => ({
+          name: String(variant.name ?? ''),
+          isAvailable: variant.isAvailable !== false,
+        }))
+      : [],
     isBestSeller: Boolean(initialData?.isBestSeller),
     isPromotion: Boolean(initialData?.isPromotion),
   });
@@ -333,6 +346,34 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
 
   function updateField<K extends keyof ProductData>(key: K, value: ProductData[K]) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function addVariant() {
+    setForm((current) => {
+      const variants = current.variants ?? [];
+      if (variants.length >= 20) return current;
+
+      return {
+        ...current,
+        variants: [...variants, { name: '', isAvailable: true }],
+      };
+    });
+  }
+
+  function updateVariant(index: number, patch: Partial<ProductVariant>) {
+    setForm((current) => ({
+      ...current,
+      variants: (current.variants ?? []).map((variant, variantIndex) =>
+        variantIndex === index ? { ...variant, ...patch } : variant,
+      ),
+    }));
+  }
+
+  function removeVariant(index: number) {
+    setForm((current) => ({
+      ...current,
+      variants: (current.variants ?? []).filter((_, variantIndex) => variantIndex !== index),
+    }));
   }
 
   function updateImageSlot(index: number, updater: (slot: ImageSlot) => ImageSlot) {
@@ -489,6 +530,12 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
         imagePublicId4: uploadedImages[3].publicId || null,
         tokopediaUrl: form.tokopediaUrl?.trim() || null,
         tiktokShopUrl: form.tiktokShopUrl?.trim() || null,
+        variants: (form.variants ?? [])
+          .map((variant) => ({
+            name: variant.name.trim(),
+            isAvailable: variant.isAvailable,
+          }))
+          .filter((variant) => variant.name),
         isBestSeller: Boolean(form.isBestSeller),
         isPromotion: Boolean(form.isPromotion),
       };
@@ -663,6 +710,68 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
                 onChange={(event) => updateField('discountPrice', parseRupiah(event.target.value))}
               />
             </label>
+          </div>
+
+          <div className="rounded-2xl border border-sky-300/10 bg-sky-400/[0.025] p-4">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-100">Varian produk</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-400">
+                  Opsional. Tambahkan pilihan ukuran, tipe, warna, atau isi kemasan.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={addVariant}
+                disabled={(form.variants?.length ?? 0) >= 20}
+                className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-sky-300/15 bg-sky-400/[0.08] px-4 text-xs font-semibold text-sky-200 transition hover:bg-sky-400/[0.14] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Plus size={15} /> Tambah varian
+              </button>
+            </div>
+
+            {(form.variants?.length ?? 0) > 0 ? (
+              <div className="mt-4 grid gap-3">
+                {form.variants?.map((variant, index) => (
+                  <div
+                    key={index}
+                    className="grid gap-3 rounded-xl border border-white/[0.07] bg-slate-950/20 p-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
+                  >
+                    <input
+                      className="admin-input"
+                      maxLength={80}
+                      placeholder="Contoh: P100 (isi 10 pcs)"
+                      aria-label={`Nama varian ${index + 1}`}
+                      value={variant.name}
+                      onChange={(event) => updateVariant(index, { name: event.target.value })}
+                    />
+                    <label className="inline-flex cursor-pointer items-center gap-2 px-1 text-xs font-medium text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={variant.isAvailable}
+                        onChange={(event) =>
+                          updateVariant(index, { isAvailable: event.target.checked })
+                        }
+                        className="h-4 w-4 rounded border-white/20 accent-sky-500"
+                      />
+                      Tersedia
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => removeVariant(index)}
+                      className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-red-300/15 bg-red-400/[0.06] px-3 text-xs font-semibold text-red-200 transition hover:bg-red-400/[0.12]"
+                      aria-label={`Hapus varian ${variant.name || index + 1}`}
+                    >
+                      <Trash2 size={14} /> Hapus
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 rounded-xl border border-dashed border-white/[0.08] px-4 py-5 text-center text-xs text-slate-500">
+                Belum ada varian. Produk tetap dapat disimpan tanpa varian.
+              </p>
+            )}
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-emerald-300/10 bg-gradient-to-br from-emerald-400/[0.055] via-white/[0.02] to-cyan-400/[0.035] p-4">

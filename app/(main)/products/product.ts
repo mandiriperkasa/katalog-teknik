@@ -18,8 +18,15 @@ export type ProductRow = {
   imageUrl4?: string | null;
   tokopediaUrl?: string | null;
   tiktokShopUrl?: string | null;
+  variants?: ProductVariant[] | null;
+  isVisible?: boolean | string | null;
   isBestSeller?: boolean | string | null;
   isPromotion?: boolean | string | null;
+};
+
+export type ProductVariant = {
+  name: string;
+  isAvailable: boolean;
 };
 
 export function slugifyProductName(name?: string | null) {

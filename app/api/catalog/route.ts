@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
             ELSE 'False'
           END AS "Terlaris"
         FROM products
+        WHERE is_visible = TRUE
         ORDER BY legacy_no ASC, id ASC
       `;
 

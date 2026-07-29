@@ -28,6 +28,7 @@ export async function GET() {
       FROM products AS product
       WHERE
         product.is_promotion = TRUE
+        AND product.is_visible = TRUE
         AND product.image_url IS NOT NULL
         AND BTRIM(product.image_url) <> ''
       ORDER BY

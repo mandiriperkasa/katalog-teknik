@@ -1,4 +1,18 @@
-import { bigint, boolean, integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import {
+  bigint,
+  boolean,
+  integer,
+  jsonb,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+} from 'drizzle-orm/pg-core';
+
+export type ProductVariant = {
+  name: string;
+  isAvailable: boolean;
+};
 
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
@@ -29,6 +43,8 @@ export const products = pgTable('products', {
 
   tokopediaUrl: text('tokopedia_url'),
   tiktokShopUrl: text('tiktok_shop_url'),
+  variants: jsonb('variants').$type<ProductVariant[]>().notNull().default([]),
+  isVisible: boolean('is_visible').notNull().default(true),
   isBestSeller: boolean('is_best_seller').notNull().default(false),
   isPromotion: boolean('is_promotion').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),

@@ -5,6 +5,8 @@ import {
   AlertCircle,
   Boxes,
   ChevronDown,
+  Eye,
+  EyeOff,
   Filter,
   LoaderCircle,
   PackageOpen,
@@ -29,6 +31,7 @@ type ProductRow = {
   rating?: number | string | null;
   showRating?: boolean | null;
   imageUrl?: string | null;
+  isVisible?: boolean | null;
   isBestSeller?: boolean | null;
   isPromotion?: boolean | null;
 };
@@ -60,6 +63,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [promotionUpdatingIds, setPromotionUpdatingIds] = useState<Set<number>>(() => new Set());
+  const [visibilityUpdatingIds, setVisibilityUpdatingIds] = useState<Set<number>>(() => new Set());
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('Semua kategori');
@@ -140,6 +144,43 @@ export default function ProductsPage() {
     }
   }
 
+  async function handleVisibilityToggle(product: ProductRow) {
+    if (!product.id || visibilityUpdatingIds.has(product.id)) return;
+
+    const productId = product.id;
+    const nextValue = product.isVisible === false;
+    setVisibilityUpdatingIds((current) => new Set(current).add(productId));
+
+    try {
+      const response = await fetch(`/api/products/${productId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isVisible: nextValue }),
+      });
+      const result = (await response.json()) as { message?: string };
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Status tampilan produk gagal diperbarui.');
+      }
+
+      setProducts((current) =>
+        current.map((item) => (item.id === productId ? { ...item, isVisible: nextValue } : item)),
+      );
+    } catch (visibilityError) {
+      window.alert(
+        visibilityError instanceof Error
+          ? visibilityError.message
+          : 'Status tampilan produk gagal diperbarui.',
+      );
+    } finally {
+      setVisibilityUpdatingIds((current) => {
+        const next = new Set(current);
+        next.delete(productId);
+        return next;
+      });
+    }
+  }
+
   async function handleBulkDelete() {
     const ids = Array.from(selectedIds);
     if (ids.length === 0 || bulkDeleting) return;
@@ -202,7 +243,7 @@ export default function ProductsPage() {
       setError('');
 
       try {
-        const response = await fetch('/api/products', {
+        const response = await fetch('/api/products?includeHidden=true', {
           signal: controller.signal,
         });
 
@@ -453,7 +494,7 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto admin-scrollbar">
-            <table className="w-full min-w-[1100px] text-left">
+            <table className="w-full min-w-[1220px] text-left">
               <thead>
                 <tr className="border-b border-white/[0.07] bg-white/[0.025] text-[10px] font-bold uppercase tracking-[0.13em] text-slate-600">
                   <th className="w-12 px-4 py-4 text-center">
@@ -477,6 +518,7 @@ export default function ProductsPage() {
                   <th className="px-4 py-4">Harga</th>
                   <th className="px-4 py-4">Rating</th>
                   <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4 text-center">Tampilan</th>
                   <th className="px-4 py-4 text-center">Promo</th>
                   <th className="px-6 py-4 text-right">Nomor</th>
                   <th className="px-6 py-4 text-right">Aksi</th>
@@ -558,6 +600,36 @@ export default function ProductsPage() {
                         ) : (
                           <span className="text-xs text-slate-600">Reguler</span>
                         )}
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <button
+                          type="button"
+                          disabled={
+                            !product.id ||
+                            (product.id ? visibilityUpdatingIds.has(product.id) : false)
+                          }
+                          onClick={() => void handleVisibilityToggle(product)}
+                          className={`inline-flex min-h-9 min-w-[104px] items-center justify-center gap-1.5 rounded-lg border px-3 text-[11px] font-semibold transition disabled:cursor-wait disabled:opacity-55 ${
+                            product.isVisible !== false
+                              ? 'border-emerald-300/15 bg-emerald-400/[0.08] text-emerald-200 hover:bg-emerald-400/[0.14]'
+                              : 'border-slate-300/10 bg-slate-400/[0.05] text-slate-500 hover:bg-slate-400/[0.1] hover:text-slate-300'
+                          }`}
+                          aria-label={`${product.isVisible !== false ? 'Sembunyikan' : 'Tampilkan'} ${product.name || 'produk'} di katalog`}
+                          title={
+                            product.isVisible !== false
+                              ? 'Klik untuk menyembunyikan produk'
+                              : 'Klik untuk menampilkan produk'
+                          }
+                        >
+                          {product.id && visibilityUpdatingIds.has(product.id) ? (
+                            <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                          ) : product.isVisible !== false ? (
+                            <Eye className="h-3.5 w-3.5" />
+                          ) : (
+                            <EyeOff className="h-3.5 w-3.5" />
+                          )}
+                          {product.isVisible !== false ? 'Tampil' : 'Tidak tampil'}
+                        </button>
                       </td>
                       <td className="px-4 py-4 text-center">
                         <label className="inline-flex cursor-pointer items-center justify-center">

@@ -586,7 +586,7 @@ export default function ProductsPage() {
     return content[key]?.trim() || fallback;
   };
 
-  const products = data.length > 0 ? data : fallbackProducts;
+  const products = !loading && !error ? data : data.length > 0 ? data : fallbackProducts;
   const [search, setSearch] = useState('');
   const [searchDraft, setSearchDraft] = useState('');
   const [selectedMain, setSelectedMain] = useState('Semua');

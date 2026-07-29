@@ -19,6 +19,7 @@ import { getDatabase } from '@/lib/database/neon';
 
 import ProductCard from '../../components/ProductCard';
 import ProductDetailGallery from '../../components/ProductDetailGallery';
+import ProductVariantSelector from '../../components/ProductVariantSelector';
 import SectionHeading from '../../components/SectionHeading';
 import {
   cleanCategory,
@@ -99,10 +100,12 @@ const getDetailData = cache(async (slug: string): Promise<DetailData | null> => 
         image_url_4 AS "imageUrl4",
         tokopedia_url AS "tokopediaUrl",
         tiktok_shop_url AS "tiktokShopUrl",
+        variants,
         is_best_seller AS "isBestSeller",
         created_at AS "createdAt",
         updated_at AS "updatedAt"
       FROM products
+      WHERE is_visible = TRUE
       ORDER BY id DESC
     `,
     sql`
@@ -186,6 +189,15 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const tokopediaHref = productTokopediaUrl || content.link_tokopedia?.trim() || '';
   const tiktokShopHref = productTiktokShopUrl || content.link_tiktok_shop?.trim() || '';
   const hasMarketplace = Boolean(tokopediaHref || tiktokShopHref);
+  const variants = Array.isArray(product.variants)
+    ? product.variants.filter(
+        (variant) =>
+          variant &&
+          typeof variant.name === 'string' &&
+          variant.name.trim().length > 0 &&
+          typeof variant.isAvailable === 'boolean',
+      )
+    : [];
   const specifications = [
     ['Kategori utama', cleanCategory(product.mainCategory)],
     ['Kategori kedua', cleanCategory(product.secondCategory)],
@@ -220,7 +232,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
 
           <article
-            className={`site-card product-detail-summary ${hasMarketplace ? 'has-marketplace' : ''}`}
+            className={`site-card product-detail-summary ${hasMarketplace ? 'has-marketplace' : ''} ${variants.length > 0 ? 'has-variants' : ''}`}
           >
             <div className="flex flex-wrap gap-2">
               {isTruthy(product.isBestSeller) && (
@@ -257,6 +269,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 <strong>{formatCurrency(product.price)}</strong>
               )}
             </div>
+
+            <ProductVariantSelector variants={variants} />
 
             <div className="product-detail-assurances">
               <span>

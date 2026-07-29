@@ -9,7 +9,9 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const search = request.nextUrl.searchParams.get('search') ?? undefined;
-    const data = await getProducts({ search });
+    const hiddenRequested = request.nextUrl.searchParams.get('includeHidden') === 'true';
+    const includeHidden = hiddenRequested && (await isAdminAuthenticated());
+    const data = await getProducts({ search, includeHidden });
 
     return NextResponse.json(data, {
       headers: { 'Cache-Control': 'no-store' },

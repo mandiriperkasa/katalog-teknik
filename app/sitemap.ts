@@ -56,6 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         name,
         updated_at AS "updatedAt"
       FROM products
+      WHERE is_visible = TRUE
       ORDER BY id DESC
     `) as unknown as SitemapProduct[];
 

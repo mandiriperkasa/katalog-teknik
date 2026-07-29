@@ -5574,6 +5574,81 @@ html[data-site-theme='light'] .hero-section-fullscreen .site-button-secondary {
   font-weight: 800;
 }
 
+.product-variant-selector {
+  min-width: 0;
+  margin-top: 22px;
+  padding: 0;
+  border: 0;
+}
+
+.product-variant-selector legend {
+  margin-bottom: 10px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.product-variant-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-variant-options button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-soft) 88%, transparent);
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.product-variant-options button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent-blue) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent-blue) 8%, var(--surface-soft));
+}
+
+.product-variant-options button.is-selected {
+  border-color: var(--accent-blue);
+  background: color-mix(in srgb, var(--accent-blue) 11%, var(--surface-strong));
+  color: var(--accent-blue);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-blue) 15%, transparent);
+}
+
+.product-variant-options button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-blue) 60%, transparent);
+  outline-offset: 2px;
+}
+
+.product-variant-options button:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.48;
+  text-decoration: line-through;
+}
+
+.product-variant-options button small {
+  font-size: 8px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .product-detail-assurances {
   display: grid;
   gap: 11px;
@@ -5724,6 +5799,24 @@ html[data-site-theme='light'] .hero-section-fullscreen .site-button-secondary {
 }
 
 @media (min-width: 1101px) {
+  .product-detail-summary.has-variants {
+    aspect-ratio: auto;
+    min-height: min(680px, calc(100vh - 130px));
+  }
+
+  .product-detail-summary.has-variants .product-detail-price {
+    margin-top: 13px;
+    padding-block: 12px;
+  }
+
+  .product-detail-summary.has-variants .product-variant-selector {
+    margin-top: 14px;
+  }
+
+  .product-detail-summary.has-variants .product-detail-assurances {
+    margin-top: 14px;
+  }
+
   .product-detail-summary.has-marketplace {
     padding: 22px 26px;
   }

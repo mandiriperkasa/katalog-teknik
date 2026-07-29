@@ -34,6 +34,10 @@ type ProductPayload = {
   imagePublicId4?: string | null;
   tokopediaUrl?: string | null;
   tiktokShopUrl?: string | null;
+  variants?: Array<{
+    name?: string;
+    isAvailable?: boolean;
+  }>;
   isBestSeller?: boolean;
   isPromotion?: boolean;
 };
@@ -62,6 +66,11 @@ type ProductRecord = {
   imagePublicId4: string | null;
   tokopediaUrl: string | null;
   tiktokShopUrl: string | null;
+  variants: Array<{
+    name: string;
+    isAvailable: boolean;
+  }>;
+  isVisible: boolean;
   isBestSeller: boolean;
   isPromotion: boolean;
   createdAt: Date;
@@ -88,6 +97,20 @@ function normalizeOptionalWebUrl(value: unknown) {
   } catch {
     return null;
   }
+}
+
+function normalizeVariants(value: ProductPayload['variants']) {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .slice(0, 20)
+    .map((variant) => ({
+      name: String(variant?.name ?? '')
+        .trim()
+        .slice(0, 80),
+      isAvailable: variant?.isAvailable !== false,
+    }))
+    .filter((variant) => variant.name.length > 0);
 }
 
 async function destroyCloudinaryImages(publicIds: Array<string | null | undefined>) {
@@ -141,6 +164,8 @@ async function findProduct(productId: number) {
       image_public_id_4 AS "imagePublicId4",
       tokopedia_url AS "tokopediaUrl",
       tiktok_shop_url AS "tiktokShopUrl",
+      variants,
+      is_visible AS "isVisible",
       is_best_seller AS "isBestSeller",
       is_promotion AS "isPromotion",
       created_at AS "createdAt",
@@ -165,6 +190,10 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     const product = await findProduct(productId);
 
     if (!product) {
+      return NextResponse.json({ message: 'Produk tidak ditemukan.' }, { status: 404 });
+    }
+
+    if (!product.isVisible && !(await isAdminAuthenticated())) {
       return NextResponse.json({ message: 'Produk tidak ditemukan.' }, { status: 404 });
     }
 
@@ -250,23 +279,41 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    const body = (await request.json()) as { isPromotion?: unknown };
+    const body = (await request.json()) as {
+      isPromotion?: unknown;
+      isVisible?: unknown;
+    };
+    const updatesPromotion = typeof body.isPromotion === 'boolean';
+    const updatesVisibility = typeof body.isVisible === 'boolean';
 
-    if (typeof body.isPromotion !== 'boolean') {
-      return NextResponse.json({ message: 'Status promo tidak valid.' }, { status: 400 });
+    if (!updatesPromotion && !updatesVisibility) {
+      return NextResponse.json({ message: 'Status produk tidak valid.' }, { status: 400 });
     }
 
     const sql = getDatabase();
-    const rows = (await sql`
-      UPDATE products
-      SET
-        is_promotion = ${body.isPromotion},
-        updated_at = NOW()
-      WHERE id = ${productId}
-      RETURNING
-        id,
-        is_promotion AS "isPromotion"
-    `) as unknown as Array<{ id: number; isPromotion: boolean }>;
+    const rows = updatesVisibility
+      ? ((await sql`
+          UPDATE products
+          SET
+            is_visible = ${body.isVisible as boolean},
+            updated_at = NOW()
+          WHERE id = ${productId}
+          RETURNING
+            id,
+            is_visible AS "isVisible",
+            is_promotion AS "isPromotion"
+        `) as unknown as Array<{ id: number; isVisible: boolean; isPromotion: boolean }>)
+      : ((await sql`
+          UPDATE products
+          SET
+            is_promotion = ${body.isPromotion as boolean},
+            updated_at = NOW()
+          WHERE id = ${productId}
+          RETURNING
+            id,
+            is_visible AS "isVisible",
+            is_promotion AS "isPromotion"
+        `) as unknown as Array<{ id: number; isVisible: boolean; isPromotion: boolean }>);
 
     if (!rows[0]) {
       return NextResponse.json({ message: 'Produk tidak ditemukan.' }, { status: 404 });
@@ -274,8 +321,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json(rows[0]);
   } catch (error) {
-    console.error('Gagal mengubah status promo produk:', error);
-    return NextResponse.json({ message: 'Gagal mengubah status promo.' }, { status: 500 });
+    console.error('Gagal mengubah status produk:', error);
+    return NextResponse.json({ message: 'Gagal mengubah status produk.' }, { status: 500 });
   }
 }
 
@@ -326,6 +373,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const tokopediaUrl = normalizeOptionalWebUrl(body.tokopediaUrl);
     const tiktokShopUrl = normalizeOptionalWebUrl(body.tiktokShopUrl);
+    const variants = normalizeVariants(body.variants);
 
     if (String(body.tokopediaUrl ?? '').trim() && !tokopediaUrl) {
       return NextResponse.json({ message: 'URL Tokopedia tidak valid.' }, { status: 400 });
@@ -375,6 +423,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         image_public_id_4 = ${nextPublicIds[3]},
         tokopedia_url = ${tokopediaUrl},
         tiktok_shop_url = ${tiktokShopUrl},
+        variants = ${JSON.stringify(variants)}::jsonb,
         is_best_seller = ${Boolean(body.isBestSeller)},
         is_promotion = ${Boolean(body.isPromotion)},
         updated_at = NOW()

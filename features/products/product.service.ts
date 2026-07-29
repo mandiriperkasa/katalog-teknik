@@ -6,6 +6,7 @@ import { createProducts as insertProducts, findProducts } from './product.reposi
 
 const productQuerySchema = z.object({
   search: z.string().trim().max(100).optional(),
+  includeHidden: z.boolean().default(false),
 });
 
 const optionalImageUrl = z
@@ -28,6 +29,15 @@ const optionalMarketplaceUrl = z
   .optional()
   .nullable()
   .transform((value) => value ?? '');
+const productVariantsSchema = z
+  .array(
+    z.object({
+      name: z.string().trim().min(1).max(80),
+      isAvailable: z.boolean().default(true),
+    }),
+  )
+  .max(20)
+  .default([]);
 const productCreateSchema = z
   .object({
     name: z.string().trim().min(2, 'Nama produk minimal 2 karakter.'),
@@ -51,6 +61,7 @@ const productCreateSchema = z
     imagePublicId4: optionalPublicId,
     tokopediaUrl: optionalMarketplaceUrl,
     tiktokShopUrl: optionalMarketplaceUrl,
+    variants: productVariantsSchema,
     isBestSeller: z.coerce.boolean().default(false),
     isPromotion: z.coerce.boolean().default(false),
   })
@@ -70,7 +81,7 @@ const productCreateSchema = z
 
 export async function getProducts(query: unknown) {
   const parsed = productQuerySchema.parse(query);
-  return findProducts(parsed.search);
+  return findProducts(parsed.search, parsed.includeHidden);
 }
 
 export async function createProduct(input: unknown) {
@@ -112,6 +123,7 @@ export async function createProduct(input: unknown) {
       imagePublicId4: parsed.imagePublicId4 || null,
       tokopediaUrl: parsed.tokopediaUrl || null,
       tiktokShopUrl: parsed.tiktokShopUrl || null,
+      variants: parsed.variants,
       isBestSeller: parsed.isBestSeller,
       isPromotion: parsed.isPromotion,
     },

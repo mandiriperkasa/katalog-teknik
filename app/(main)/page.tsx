@@ -128,6 +128,7 @@ export default function Home() {
   const {
     data: productRows,
     loading: productsLoading,
+    error: productsError,
     refresh: refreshProducts,
   } = useSheetData<ProductRow>('Products');
 
@@ -176,8 +177,8 @@ export default function Home() {
 
   const allProducts = useMemo(() => {
     const rows = productRows as ProductRow[];
-    return rows.length > 0 ? rows : fallbackProducts;
-  }, [productRows]);
+    return !productsLoading && !productsError ? rows : rows.length > 0 ? rows : fallbackProducts;
+  }, [productRows, productsError, productsLoading]);
 
   const bestSellerProducts = useMemo(() => getTopSellingProducts(allProducts), [allProducts]);
 
@@ -536,9 +537,7 @@ export default function Home() {
           <a
             className="hero-mobile-quick-quote"
             href={`https://wa.me/${normalizeWhatsAppNumber(
-              content.whatsapp_number?.trim() ||
-                content.footer_phone?.trim() ||
-                '+6285640100044',
+              content.whatsapp_number?.trim() || content.footer_phone?.trim() || '+6285640100044',
             )}`}
             target="_blank"
             rel="noopener noreferrer"
