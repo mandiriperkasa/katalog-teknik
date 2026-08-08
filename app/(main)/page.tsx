@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
 import { useSheetData } from '../hooks/useSheetData';
 import PartnerLogoStrip from './components/PartnerLogoStrip';
 import ProductCard from './components/ProductCard';
@@ -245,8 +246,7 @@ export default function Home() {
     [content],
   );
   const resolvedActivePromoSlide = promoSlides.length ? activePromoSlide % promoSlides.length : 0;
-  const activePromo = promoSlides[resolvedActivePromoSlide];
-  const showPromoBanner = content.home_promo_banner_enabled === 'true' && Boolean(activePromo);
+  const showPromoBanner = content.home_promo_banner_enabled === 'true' && promoSlides.length > 0;
 
   useEffect(() => {
     if (promoSlides.length <= 1) return;
@@ -660,7 +660,7 @@ export default function Home() {
           <SectionHeading eyebrow="Produk unggulan" title="Produk Kami" />
         </div>
 
-        {showPromoBanner && activePromo && (
+        {showPromoBanner && (
           <div className="home-promo-banner-section" aria-label="Promo terbaru">
             <motion.div
               className="home-promo-banner-frame"
@@ -669,48 +669,59 @@ export default function Home() {
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             >
-              <AnimatePresence initial={false} mode="wait">
-                <motion.div
-                  key={activePromo.id}
-                  className="home-promo-banner-slide"
-                  initial={{ opacity: 0, x: 28, scale: 1.018, filter: 'blur(7px)' }}
-                  animate={{ opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, x: -28, scale: 0.992, filter: 'blur(5px)' }}
-                  transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  {activePromo.link ? (
-                    <a
-                      href={activePromo.link}
-                      className="home-promo-banner-link"
-                      target={activePromo.link.startsWith('http') ? '_blank' : undefined}
-                      rel={activePromo.link.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      aria-label={`Lihat detail promo ${resolvedActivePromoSlide + 1}`}
-                    >
-                      <picture>
-                        {activePromo.mobile && (
-                          <source media="(max-width: 640px)" srcSet={activePromo.mobile} />
-                        )}
-                        {/* URL gambar dikelola admin melalui Cloudinary. */}
-                        <img
-                          src={activePromo.desktop || activePromo.mobile}
-                          alt={`Banner promo Mandiri Perkakas ${resolvedActivePromoSlide + 1}`}
-                        />
-                      </picture>
-                    </a>
-                  ) : (
-                    <picture>
-                      {activePromo.mobile && (
-                        <source media="(max-width: 640px)" srcSet={activePromo.mobile} />
-                      )}
-                      {/* URL gambar dikelola admin melalui Cloudinary. */}
-                      <img
-                        src={activePromo.desktop || activePromo.mobile}
-                        alt={`Banner promo Mandiri Perkakas ${resolvedActivePromoSlide + 1}`}
+              {promoSlides.map((slide, index) => {
+                const isActive = index === resolvedActivePromoSlide;
+                const picture = (
+                  <picture>
+                    {slide.mobile && (
+                      <source
+                        media="(max-width: 640px)"
+                        srcSet={getOptimizedCloudinaryUrl(slide.mobile, {
+                          width: 1080,
+                          quality: 'auto:best',
+                        })}
                       />
-                    </picture>
-                  )}
-                </motion.div>
-              </AnimatePresence>
+                    )}
+                    {/* Semua slide dirender agar browser memuat gambar promo sejak awal. */}
+                    <img
+                      src={getOptimizedCloudinaryUrl(slide.desktop || slide.mobile, {
+                        width: 1920,
+                        quality: 'auto:best',
+                      })}
+                      alt={`Banner promo Mandiri Perkakas ${index + 1}`}
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      fetchPriority={index === 0 ? 'high' : 'low'}
+                      decoding="async"
+                    />
+                  </picture>
+                );
+
+                return (
+                  <motion.div
+                    key={slide.id}
+                    className={`home-promo-banner-slide ${isActive ? 'is-active' : ''}`}
+                    initial={false}
+                    animate={{ opacity: isActive ? 1 : 0, scale: isActive ? 1 : 1.012 }}
+                    transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+                    aria-hidden={!isActive}
+                  >
+                    {slide.link ? (
+                      <a
+                        href={slide.link}
+                        className="home-promo-banner-link"
+                        target={slide.link.startsWith('http') ? '_blank' : undefined}
+                        rel={slide.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        aria-label={`Lihat detail promo ${index + 1}`}
+                        tabIndex={isActive ? undefined : -1}
+                      >
+                        {picture}
+                      </a>
+                    ) : (
+                      picture
+                    )}
+                  </motion.div>
+                );
+              })}
 
               <span className="home-promo-banner-shine" aria-hidden="true" />
 
