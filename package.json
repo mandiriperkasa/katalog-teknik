@@ -14,6 +14,7 @@
     "db:push": "drizzle-kit push",
     "db:ensure-product-variants": "tsx scripts/ensure-product-variants.ts",
     "db:ensure-product-visibility": "tsx scripts/ensure-product-visibility.ts",
+    "db:ensure-product-brand": "tsx scripts/ensure-product-brand.ts",
     "auth:hash-password": "tsx scripts/hash-admin-password.ts"
   },
   "dependencies": {

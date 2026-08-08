@@ -9,6 +9,7 @@ import ProductForm from '@/app/admin/components/ProductForm';
 type ProductData = {
   id: string;
   name: string;
+  brand?: string | null;
   mainCategory: string;
   secondCategory: string;
   subCategory: string;

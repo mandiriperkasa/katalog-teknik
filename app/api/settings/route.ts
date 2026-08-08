@@ -4,6 +4,7 @@ import { z } from 'zod';
 import cloudinary from '../../../lib/cloudinary';
 import { getDatabase } from '../../../lib/database/neon';
 import { isAdminAuthenticated } from '../../../lib/require-admin';
+import { siteSettingDefaults } from '../../../lib/site-setting-defaults';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,13 @@ const updateSettingSchema = z.object({
 const imageSettingFolders: Partial<Record<string, string[]>> = {
   hero_background_url: ['katalog-teknik/hero/', 'katalog-teknik/products/'],
   header_brand_logo_url: ['katalog-teknik/logos/', 'katalog-teknik/products/'],
+  general_favicon_url: ['katalog-teknik/logos/'],
+  home_promo_banner_desktop_url: ['katalog-teknik/banners/'],
+  home_promo_banner_mobile_url: ['katalog-teknik/banners/'],
+  home_promo_banner_2_desktop_url: ['katalog-teknik/banners/'],
+  home_promo_banner_2_mobile_url: ['katalog-teknik/banners/'],
+  home_promo_banner_3_desktop_url: ['katalog-teknik/banners/'],
+  home_promo_banner_3_mobile_url: ['katalog-teknik/banners/'],
 };
 
 function getCloudinaryPublicId(value: string | null | undefined, allowedFolders: string[]) {
@@ -61,11 +69,22 @@ export async function GET() {
       ORDER BY key ASC
     `;
 
-    return NextResponse.json(rows, {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
+    const typedRows = rows as Array<{ key: string; value: string | null }>;
+    const savedSettings = new Map(typedRows.map((row) => [row.key, row]));
+    const defaultRows = Object.entries(siteSettingDefaults)
+      .filter(([key]) => !savedSettings.has(key))
+      .map(([key, value]) => ({ key, value }));
+
+    return NextResponse.json(
+      [...typedRows, ...defaultRows].sort((left, right) =>
+        String(left.key).localeCompare(String(right.key)),
+      ),
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
       },
-    });
+    );
   } catch (error) {
     console.error('Gagal memuat pengaturan Neon:', error);
 

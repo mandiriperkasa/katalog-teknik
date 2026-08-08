@@ -6,6 +6,8 @@ import {
   ArrowUpRight,
   BadgeCheck,
   Building2,
+  ChevronLeft,
+  ChevronRight,
   Boxes,
   ClipboardList,
   Gauge,
@@ -31,6 +33,7 @@ type ProductRow = {
   id?: number;
   legacyNo?: number | string | null;
   name?: string | null;
+  brand?: string | null;
   mainCategory?: string | null;
   secondCategory?: string | null;
   subCategory?: string | null;
@@ -115,8 +118,22 @@ function normalizeWhatsAppNumber(value: string) {
   return normalized.replace(/\D/g, '');
 }
 
+function getSafeBannerLink(value: string | undefined) {
+  const link = value?.trim();
+  if (!link) return '';
+  if (link.startsWith('/') && !link.startsWith('//')) return link;
+
+  try {
+    const url = new URL(link);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : '';
+  } catch {
+    return '';
+  }
+}
+
 export default function Home() {
   const [wordIndex, setWordIndex] = useState(0);
+  const [activePromoSlide, setActivePromoSlide] = useState(0);
   const [activeCategory, setActiveCategory] = useState('Semua');
   const [quoteForm, setQuoteForm] = useState({
     name: '',
@@ -203,6 +220,43 @@ export default function Home() {
   }, [resolvedActiveCategory, bestSellerProducts]);
 
   const heroBackgroundImage = content.hero_background_url?.trim() || '';
+  const promoSlides = useMemo(
+    () =>
+      [
+        {
+          id: '1',
+          desktop: content.home_promo_banner_desktop_url?.trim() || '',
+          mobile: content.home_promo_banner_mobile_url?.trim() || '',
+          link: getSafeBannerLink(content.home_promo_banner_link),
+        },
+        {
+          id: '2',
+          desktop: content.home_promo_banner_2_desktop_url?.trim() || '',
+          mobile: content.home_promo_banner_2_mobile_url?.trim() || '',
+          link: getSafeBannerLink(content.home_promo_banner_2_link),
+        },
+        {
+          id: '3',
+          desktop: content.home_promo_banner_3_desktop_url?.trim() || '',
+          mobile: content.home_promo_banner_3_mobile_url?.trim() || '',
+          link: getSafeBannerLink(content.home_promo_banner_3_link),
+        },
+      ].filter((slide) => Boolean(slide.desktop || slide.mobile)),
+    [content],
+  );
+  const resolvedActivePromoSlide = promoSlides.length ? activePromoSlide % promoSlides.length : 0;
+  const activePromo = promoSlides[resolvedActivePromoSlide];
+  const showPromoBanner = content.home_promo_banner_enabled === 'true' && Boolean(activePromo);
+
+  useEffect(() => {
+    if (promoSlides.length <= 1) return;
+
+    const timer = window.setInterval(() => {
+      setActivePromoSlide((current) => (current + 1) % promoSlides.length);
+    }, 5500);
+
+    return () => window.clearInterval(timer);
+  }, [promoSlides.length]);
 
   const [loadedHeroImage, setLoadedHeroImage] = useState('');
 
@@ -603,11 +657,110 @@ export default function Home() {
 
       <section className="section-block section-shell home-products-section product-listing-page">
         <div className="home-products-heading">
-          <SectionHeading
-            eyebrow="Produk unggulan"
-            title="Produk Kami"
-            description="Menampilkan 10 produk dengan jumlah penjualan tertinggi, diurutkan otomatis dari yang paling banyak terjual."
-          />
+          <SectionHeading eyebrow="Produk unggulan" title="Produk Kami" />
+        </div>
+
+        {showPromoBanner && activePromo && (
+          <div className="home-promo-banner-section" aria-label="Promo terbaru">
+            <motion.div
+              className="home-promo-banner-frame"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <AnimatePresence initial={false} mode="wait">
+                <motion.div
+                  key={activePromo.id}
+                  className="home-promo-banner-slide"
+                  initial={{ opacity: 0, x: 28, scale: 1.018, filter: 'blur(7px)' }}
+                  animate={{ opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, x: -28, scale: 0.992, filter: 'blur(5px)' }}
+                  transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {activePromo.link ? (
+                    <a
+                      href={activePromo.link}
+                      className="home-promo-banner-link"
+                      target={activePromo.link.startsWith('http') ? '_blank' : undefined}
+                      rel={activePromo.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                      aria-label={`Lihat detail promo ${resolvedActivePromoSlide + 1}`}
+                    >
+                      <picture>
+                        {activePromo.mobile && (
+                          <source media="(max-width: 640px)" srcSet={activePromo.mobile} />
+                        )}
+                        {/* URL gambar dikelola admin melalui Cloudinary. */}
+                        <img
+                          src={activePromo.desktop || activePromo.mobile}
+                          alt={`Banner promo Mandiri Perkakas ${resolvedActivePromoSlide + 1}`}
+                        />
+                      </picture>
+                    </a>
+                  ) : (
+                    <picture>
+                      {activePromo.mobile && (
+                        <source media="(max-width: 640px)" srcSet={activePromo.mobile} />
+                      )}
+                      {/* URL gambar dikelola admin melalui Cloudinary. */}
+                      <img
+                        src={activePromo.desktop || activePromo.mobile}
+                        alt={`Banner promo Mandiri Perkakas ${resolvedActivePromoSlide + 1}`}
+                      />
+                    </picture>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
+              <span className="home-promo-banner-shine" aria-hidden="true" />
+
+              {promoSlides.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="home-promo-banner-arrow is-previous"
+                    onClick={() =>
+                      setActivePromoSlide(
+                        (resolvedActivePromoSlide - 1 + promoSlides.length) % promoSlides.length,
+                      )
+                    }
+                    aria-label="Promo sebelumnya"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button
+                    type="button"
+                    className="home-promo-banner-arrow is-next"
+                    onClick={() =>
+                      setActivePromoSlide((resolvedActivePromoSlide + 1) % promoSlides.length)
+                    }
+                    aria-label="Promo berikutnya"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                  <div className="home-promo-banner-dots" aria-label="Pilih promo">
+                    {promoSlides.map((slide, index) => (
+                      <button
+                        key={slide.id}
+                        type="button"
+                        className={index === resolvedActivePromoSlide ? 'is-active' : ''}
+                        onClick={() => setActivePromoSlide(index)}
+                        aria-label={`Tampilkan promo ${index + 1}`}
+                        aria-current={index === resolvedActivePromoSlide ? 'true' : undefined}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </div>
+        )}
+
+        <div className="home-products-description-row">
+          <p className="section-description home-products-description">
+            Jelajahi 10 produk unggulan dengan performa penjualan terbaik, disusun untuk membantu
+            Anda menemukan pilihan yang paling diminati.
+          </p>
           <Link href="/products" className="site-button site-button-secondary">
             Lihat seluruh katalog <ArrowUpRight size={17} />
           </Link>

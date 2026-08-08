@@ -3239,12 +3239,13 @@ html[data-site-theme='light'] .hero-visual-panel-clean {
 
 @media (max-width: 820px) {
   .home-products-heading,
+  .home-products-description-row,
   .home-product-toolbar {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .home-products-heading .site-button {
+  .home-products-description-row .site-button {
     align-self: flex-start;
   }
 
@@ -3356,6 +3357,226 @@ html[data-site-theme='light'] .hero-visual-panel-clean {
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.75;
+}
+
+.home-promo-banner-section {
+  margin-top: 28px;
+  margin-bottom: 0;
+}
+
+.home-products-description {
+  max-width: 760px;
+  margin-top: 0;
+}
+
+.home-products-description-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 34px;
+  margin-top: 20px;
+}
+
+.home-products-description-row .site-button {
+  flex: 0 0 auto;
+}
+
+.home-promo-banner-frame {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow:
+    var(--shadow-soft),
+    0 18px 50px color-mix(in srgb, var(--accent-blue) 12%, transparent);
+  animation: promo-banner-glow 4.8s ease-in-out infinite;
+}
+
+.home-promo-banner-frame picture,
+.home-promo-banner-slide,
+.home-promo-banner-link {
+  display: block;
+}
+
+.home-promo-banner-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  animation: promo-banner-focus 6s ease-out both;
+}
+
+.home-promo-banner-shine {
+  position: absolute;
+  z-index: 3;
+  inset: -45% auto -45% -32%;
+  width: 17%;
+  rotate: 13deg;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.52),
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  filter: blur(2px);
+  pointer-events: none;
+  animation: promo-banner-shine 5.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.home-promo-banner-link {
+  transition:
+    filter 220ms ease,
+    transform 320ms ease;
+}
+
+.home-promo-banner-link:hover {
+  filter: brightness(1.04);
+  transform: scale(1.003);
+}
+
+.home-promo-banner-link:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-blue) 65%, transparent);
+  outline-offset: -3px;
+}
+
+.home-promo-banner-arrow {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  translate: 0 -50%;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(7, 17, 38, 0.52);
+  box-shadow: 0 8px 24px rgba(7, 17, 38, 0.2);
+  backdrop-filter: blur(10px);
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.home-promo-banner-arrow:hover {
+  background: rgba(7, 17, 38, 0.75);
+  transform: scale(1.06);
+}
+
+.home-promo-banner-arrow.is-previous {
+  left: 16px;
+}
+
+.home-promo-banner-arrow.is-next {
+  right: 16px;
+}
+
+.home-promo-banner-dots {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  translate: -50% 0;
+  border-radius: 999px;
+  background: rgba(7, 17, 38, 0.52);
+  backdrop-filter: blur(10px);
+}
+
+.home-promo-banner-dots button {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.58);
+  transition:
+    width 220ms ease,
+    background 220ms ease;
+}
+
+.home-promo-banner-dots button.is-active {
+  width: 22px;
+  background: #fff;
+}
+
+@keyframes promo-banner-focus {
+  from {
+    scale: 1.025;
+  }
+  to {
+    scale: 1;
+  }
+}
+
+@keyframes promo-banner-shine {
+  0%,
+  62% {
+    left: -32%;
+    opacity: 0;
+  }
+  68% {
+    opacity: 0.75;
+  }
+  88% {
+    left: 116%;
+    opacity: 0;
+  }
+  100% {
+    left: 116%;
+    opacity: 0;
+  }
+}
+
+@keyframes promo-banner-glow {
+  0%,
+  100% {
+    border-color: var(--border);
+  }
+  50% {
+    border-color: color-mix(in srgb, var(--accent-blue) 36%, var(--border));
+  }
+}
+
+@media (max-width: 640px) {
+  .home-promo-banner-section {
+    margin-top: 22px;
+    margin-bottom: 0;
+  }
+
+  .home-promo-banner-frame {
+    border-radius: 18px;
+  }
+
+  .home-promo-banner-arrow {
+    width: 34px;
+    height: 34px;
+  }
+
+  .home-promo-banner-arrow.is-previous {
+    left: 9px;
+  }
+
+  .home-promo-banner-arrow.is-next {
+    right: 9px;
+  }
+
+  .home-promo-banner-dots {
+    bottom: 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-promo-banner-frame,
+  .home-promo-banner-frame img,
+  .home-promo-banner-shine {
+    animation: none !important;
+  }
 }
 
 /* Product catalog â€” advanced three-level category navigation */

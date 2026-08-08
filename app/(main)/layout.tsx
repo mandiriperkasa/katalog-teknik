@@ -37,7 +37,8 @@ async function getMetadataSettings() {
       FROM settings
       WHERE key IN (
         'general_site_name',
-        'general_meta_description'
+        'general_meta_description',
+        'general_favicon_url'
       )
     `) as SettingRow[];
 
@@ -60,6 +61,7 @@ export async function generateMetadata(): Promise<Metadata> {
       ? metadataFallback.siteName
       : configuredSiteName;
   const description = settings.general_meta_description?.trim() || metadataFallback.description;
+  const faviconUrl = settings.general_favicon_url?.trim();
 
   return {
     metadataBase: new URL(SITE_URL),
@@ -68,6 +70,11 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${siteName}`,
     },
     description,
+    icons: {
+      icon: faviconUrl || '/favicon-default.ico',
+      shortcut: faviconUrl || '/favicon-default.ico',
+      apple: faviconUrl || '/favicon-default.ico',
+    },
     alternates: {
       canonical: '/',
     },
@@ -99,4 +106,3 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     </ThemeProvider>
   );
 }
-

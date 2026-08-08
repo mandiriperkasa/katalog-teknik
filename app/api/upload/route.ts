@@ -15,6 +15,7 @@ const MANAGED_PUBLIC_ID_PREFIXES = [
   'katalog-teknik/hero/',
   'katalog-teknik/logos/',
   'katalog-teknik/partners/',
+  'katalog-teknik/banners/',
 ];
 
 function isManagedPublicId(value: unknown): value is string {
@@ -49,11 +50,12 @@ export async function POST(request: NextRequest) {
     const uploadKind =
       requestedFolder === 'gallery' ||
       requestedFolder === 'hero' ||
-      requestedFolder === 'logos'
+      requestedFolder === 'logos' ||
+      requestedFolder === 'banners'
         ? requestedFolder
         : 'products';
     const folder = `katalog-teknik/${uploadKind}`;
-    const isHeroUpload = uploadKind === 'hero';
+    const isLargeFormatUpload = uploadKind === 'hero' || uploadKind === 'banners';
 
     const file = formData.get('file');
 
@@ -81,12 +83,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Validasi ukuran
-    const maximumFileSize = isHeroUpload ? MAX_HERO_FILE_SIZE : MAX_FILE_SIZE;
+    const maximumFileSize = isLargeFormatUpload ? MAX_HERO_FILE_SIZE : MAX_FILE_SIZE;
 
     if (file.size > maximumFileSize) {
       return NextResponse.json(
         {
-          message: `Ukuran gambar maksimal ${isHeroUpload ? '10MB' : '3MB'}.`,
+          message: `Ukuran gambar maksimal ${isLargeFormatUpload ? '10MB' : '3MB'}.`,
         },
         {
           status: 400,
@@ -109,7 +111,7 @@ export async function POST(request: NextRequest) {
           {
             folder,
             resource_type: 'image',
-            ...(isHeroUpload
+            ...(isLargeFormatUpload
               ? {}
               : {
                   transformation: [

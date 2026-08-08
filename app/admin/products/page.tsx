@@ -24,6 +24,7 @@ type ProductRow = {
   id?: number;
   legacyNo?: number | null;
   name?: string | null;
+  brand?: string | null;
   mainCategory?: string | null;
   secondCategory?: string | null;
   subCategory?: string | null;
@@ -293,6 +294,7 @@ export default function ProductsPage() {
       const matchesCategory = category === 'Semua kategori' || product.mainCategory === category;
       const searchable = [
         product.name,
+        product.brand,
         product.mainCategory,
         product.secondCategory,
         product.subCategory,

@@ -14,6 +14,7 @@ type RouteContext = {
 
 type ProductPayload = {
   name?: string;
+  brand?: string;
   mainCategory?: string;
   secondCategory?: string;
   subCategory?: string;
@@ -49,6 +50,7 @@ type ProductRecord = {
   id: number;
   legacyNo: number | null;
   name: string;
+  brand: string | null;
   mainCategory: string | null;
   secondCategory: string | null;
   subCategory: string | null;
@@ -156,6 +158,7 @@ async function findProduct(productId: number) {
       id,
       legacy_no AS "legacyNo",
       name,
+      brand,
       main_category AS "mainCategory",
       second_category AS "secondCategory",
       sub_category AS "subCategory",
@@ -359,6 +362,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     const name = String(body.name ?? '').trim();
+    const brand = String(body.brand ?? '').trim();
     const normalizedPrice = Number(body.price) || 0;
     const rating = Math.min(5, Math.max(0, Number(body.rating) || 0));
     const hasDiscount = Boolean(body.hasDiscount);
@@ -366,6 +370,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     if (!name) {
       return NextResponse.json({ message: 'Nama produk wajib diisi.' }, { status: 400 });
+    }
+
+    if (!brand) {
+      return NextResponse.json({ message: 'Merek produk wajib diisi.' }, { status: 400 });
     }
 
     if (!String(body.imageUrl ?? '').trim()) {
@@ -429,6 +437,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       UPDATE products
       SET
         name = ${name},
+        brand = ${brand},
         main_category = ${String(body.mainCategory ?? '').trim() || 'Lainnya'},
         second_category = ${String(body.secondCategory ?? '').trim() || 'Lainnya'},
         sub_category = ${String(body.subCategory ?? '').trim() || 'Lainnya'},

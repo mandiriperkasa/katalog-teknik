@@ -12,6 +12,7 @@ export async function findProducts(search?: string, includeHidden = false) {
 
   const searchFilter = or(
     ilike(products.name, `%${keyword}%`),
+    ilike(products.brand, `%${keyword}%`),
     ilike(products.mainCategory, `%${keyword}%`),
     ilike(products.secondCategory, `%${keyword}%`),
     ilike(products.subCategory, `%${keyword}%`),

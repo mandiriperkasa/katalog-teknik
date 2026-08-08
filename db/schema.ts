@@ -21,6 +21,7 @@ export const products = pgTable('products', {
   id: serial('id').primaryKey(),
   legacyNo: integer('legacy_no'),
   name: text('name').notNull(),
+  brand: text('brand'),
   mainCategory: text('main_category'),
   secondCategory: text('second_category'),
   subCategory: text('sub_category'),

@@ -26,6 +26,7 @@ import { cleanupCloudinaryUploads } from '@/lib/cleanup-cloudinary-upload';
 type ProductData = {
   id?: number | string;
   name: string;
+  brand?: string | null;
   mainCategory: string;
   secondCategory: string;
   subCategory: string;
@@ -309,9 +310,11 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [brandOptions, setBrandOptions] = useState<string[]>([]);
   const [imageSlots, setImageSlots] = useState<ImageSlot[]>(() => createInitialSlots(initialData));
   const [form, setForm] = useState<ProductData>({
     name: initialData?.name || '',
+    brand: initialData?.brand || '',
     mainCategory: initialData?.mainCategory || '',
     secondCategory: initialData?.secondCategory || '',
     subCategory: initialData?.subCategory || '',
@@ -370,6 +373,37 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
     isBestSeller: Boolean(initialData?.isBestSeller),
     isPromotion: Boolean(initialData?.isPromotion),
   });
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadBrandOptions() {
+      try {
+        const response = await fetch('/api/products?includeHidden=true', {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const products = (await response.json()) as Array<{ brand?: string | null }>;
+
+        if (!response.ok || !Array.isArray(products)) return;
+
+        const uniqueBrands = new Map<string, string>();
+        products.forEach((product) => {
+          const brand = product.brand?.trim();
+          if (brand) uniqueBrands.set(brand.toLocaleLowerCase('id-ID'), brand);
+        });
+
+        setBrandOptions(
+          Array.from(uniqueBrands.values()).sort((left, right) => left.localeCompare(right, 'id')),
+        );
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+      }
+    }
+
+    void loadBrandOptions();
+    return () => controller.abort();
+  }, []);
 
   const selectedImageCount = useMemo(
     () => imageSlots.filter((slot) => Boolean(slot.preview || slot.url)).length,
@@ -518,6 +552,7 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
       setMessage('');
 
       if (!form.name.trim()) throw new Error('Nama produk wajib diisi.');
+      if (!form.brand?.trim()) throw new Error('Merek produk wajib diisi.');
       if (form.price === '' || Number(form.price) <= 0) {
         throw new Error('Harga produk wajib diisi dan harus lebih besar dari 0.');
       }
@@ -569,6 +604,7 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
 
       const payload = {
         name: form.name.trim(),
+        brand: form.brand?.trim(),
         mainCategory: form.mainCategory.trim(),
         secondCategory: form.secondCategory.trim(),
         subCategory: form.subCategory.trim(),
@@ -660,6 +696,28 @@ export default function ProductForm({ mode, initialData }: ProductFormProps) {
               value={form.name}
               onChange={(event) => updateField('name', event.target.value)}
             />
+          </label>
+
+          <label className="grid gap-2 text-sm font-medium text-slate-200">
+            Merek produk
+            <input
+              className="admin-input"
+              list="saved-product-brands"
+              placeholder="Pilih merek tersimpan atau ketik merek baru"
+              value={form.brand ?? ''}
+              onChange={(event) => updateField('brand', event.target.value)}
+              autoComplete="off"
+              required
+            />
+            <datalist id="saved-product-brands">
+              {brandOptions.map((brand) => (
+                <option key={brand} value={brand} />
+              ))}
+            </datalist>
+            <span className="text-xs font-normal leading-5 text-slate-500">
+              Merek yang pernah disimpan akan muncul sebagai pilihan. Anda tetap dapat mengetik
+              merek baru.
+            </span>
           </label>
 
           <div className="grid gap-5 md:grid-cols-3">

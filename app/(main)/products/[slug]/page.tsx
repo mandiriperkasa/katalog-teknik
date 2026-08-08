@@ -82,6 +82,7 @@ const getDetailData = cache(async (slug: string): Promise<DetailData | null> => 
         id,
         legacy_no AS "legacyNo",
         name,
+        brand,
         main_category AS "mainCategory",
         second_category AS "secondCategory",
         sub_category AS "subCategory",
@@ -197,6 +198,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       )
     : [];
   const specifications = [
+    ...(product.brand?.trim() ? [['Merek', product.brand.trim()]] : []),
     ['Kategori utama', cleanCategory(product.mainCategory)],
     ['Kategori kedua', cleanCategory(product.secondCategory)],
     ['Subkategori', cleanCategory(product.subCategory)],

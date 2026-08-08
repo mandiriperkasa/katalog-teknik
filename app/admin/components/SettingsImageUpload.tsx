@@ -1,16 +1,11 @@
 'use client';
 
-import {
-  ImageIcon,
-  LoaderCircle,
-  Trash2,
-  UploadCloud,
-} from 'lucide-react';
+import { ImageIcon, LoaderCircle, Trash2, UploadCloud } from 'lucide-react';
 import { type ChangeEvent, useEffect, useId, useRef, useState } from 'react';
 
 import { cleanupCloudinaryUploads } from '@/lib/cleanup-cloudinary-upload';
 
-type UploadKind = 'hero' | 'logo';
+type UploadKind = 'hero' | 'logo' | 'favicon' | 'banner-desktop' | 'banner-mobile';
 
 type UploadResponse = {
   url?: string;
@@ -39,19 +34,39 @@ const COPY: Record<
 > = {
   hero: {
     title: 'Upload background hero',
-    description:
-      'Gunakan foto landscape. Rekomendasi minimal 1920 × 1080 piksel.',
+    description: 'Gunakan foto landscape. Rekomendasi minimal 1920 × 1080 piksel.',
     folder: 'hero',
     previewClass: 'aspect-[16/9]',
     imageClass: 'object-cover',
   },
   logo: {
     title: 'Upload logo perusahaan',
-    description:
-      'Gunakan PNG atau WebP transparan agar logo terlihat rapi pada navigasi.',
+    description: 'Gunakan PNG atau WebP transparan agar logo terlihat rapi pada navigasi.',
     folder: 'logos',
     previewClass: 'aspect-[3/1]',
     imageClass: 'object-contain p-3',
+  },
+  favicon: {
+    title: 'Upload favicon website',
+    description: 'Gunakan logo persegi dalam format PNG atau WebP. Rekomendasi 512 x 512 piksel.',
+    folder: 'logos',
+    previewClass: 'aspect-square max-w-48',
+    imageClass: 'object-contain p-4',
+  },
+  'banner-desktop': {
+    title: 'Upload banner desktop',
+    description: 'Gunakan gambar landscape. Rekomendasi rasio 4:1, minimal 1600 x 400 piksel.',
+    folder: 'banners',
+    previewClass: 'aspect-[4/1]',
+    imageClass: 'object-cover',
+  },
+  'banner-mobile': {
+    title: 'Upload banner mobile',
+    description:
+      'Gunakan gambar khusus layar ponsel. Rekomendasi rasio 4:3, minimal 800 x 600 piksel.',
+    folder: 'banners',
+    previewClass: 'aspect-[4/3]',
+    imageClass: 'object-cover',
   },
 };
 
@@ -128,9 +143,7 @@ export default function SettingsImageUpload({
       onChange(result.url);
     } catch (uploadError) {
       setError(
-        uploadError instanceof Error
-          ? uploadError.message
-          : 'Upload gambar ke Cloudinary gagal.',
+        uploadError instanceof Error ? uploadError.message : 'Upload gambar ke Cloudinary gagal.',
       );
     } finally {
       setUploading(false);
@@ -146,9 +159,7 @@ export default function SettingsImageUpload({
         </span>
         <div>
           <p className="text-sm font-semibold text-slate-100">{copy.title}</p>
-          <p className="mt-1 text-xs leading-5 text-slate-500">
-            {copy.description}
-          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">{copy.description}</p>
         </div>
       </div>
 
@@ -233,8 +244,7 @@ export default function SettingsImageUpload({
         <p className="mt-3 text-xs leading-5 text-red-300">{error}</p>
       ) : (
         <p className="mt-3 text-[11px] leading-5 text-slate-600">
-          Setelah upload berhasil, tekan tombol Simpan pada field ini agar URL
-          tersimpan ke NeonDB.
+          Setelah upload berhasil, tekan tombol Simpan pada field ini agar URL tersimpan ke NeonDB.
         </p>
       )}
     </div>

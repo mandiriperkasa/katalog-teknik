@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const productSchema = z.object({
   name: z.string().min(2),
+  brand: z.string().trim().min(1),
   mainCategory: z.string().default('Lainnya'),
   secondCategory: z.string().default('Lainnya'),
   subCategory: z.string().default('Lainnya'),

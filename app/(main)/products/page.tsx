@@ -178,12 +178,7 @@ function formatPriceInput(value: string) {
 }
 
 function getProductBrand(product: ProductRow) {
-  return (
-    String(product.name ?? '')
-      .trim()
-      .split(/\s+/)[0]
-      ?.replace(/^[^a-z0-9]+|[^a-z0-9-]+$/gi, '') || 'Lainnya'
-  );
+  return product.brand?.trim() || 'Lainnya';
 }
 
 function buildCategoryTree(products: ProductRow[]): MainCategoryNode[] {
@@ -636,14 +631,16 @@ export default function ProductsPage() {
 
   const categoryTree = useMemo(() => buildCategoryTree(products), [products]);
   const brandOptions = useMemo(() => {
-    const counts = new Map<string, number>();
+    const counts = new Map<string, BrandOption>();
 
     products.forEach((product) => {
       const brand = getProductBrand(product);
-      counts.set(brand, (counts.get(brand) ?? 0) + 1);
+      const key = brand.toLocaleLowerCase('id-ID');
+      const current = counts.get(key);
+      counts.set(key, { name: current?.name ?? brand, count: (current?.count ?? 0) + 1 });
     });
 
-    return Array.from(counts, ([name, count]) => ({ name, count })).sort((left, right) =>
+    return Array.from(counts.values()).sort((left, right) =>
       left.name.localeCompare(right.name, 'id'),
     );
   }, [products]);
@@ -660,7 +657,9 @@ export default function ProductsPage() {
       const secondMatch = !selectedSecond || second === selectedSecond;
       const subMatch = !selectedSub || sub === selectedSub;
       const brand = getProductBrand(product);
-      const brandMatch = selectedBrand === 'Semua' || brand === selectedBrand;
+      const brandMatch =
+        selectedBrand === 'Semua' ||
+        brand.localeCompare(selectedBrand, 'id', { sensitivity: 'base' }) === 0;
       const price = getEffectivePrice(product);
       const priceMatch =
         (minimumPrice === null || price >= minimumPrice) &&

@@ -2,6 +2,7 @@ export type ProductRow = {
   id?: number;
   legacyNo?: number | string | null;
   name?: string | null;
+  brand?: string | null;
   mainCategory?: string | null;
   secondCategory?: string | null;
   subCategory?: string | null;

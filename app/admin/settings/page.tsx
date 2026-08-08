@@ -45,6 +45,16 @@ const labelMap: Record<string, string> = {
   hero_rotation_speed: 'Kecepatan pergantian kata',
   hero_background_url: 'Foto background hero',
   header_brand_logo_url: 'Logo perusahaan pada navigasi',
+  home_promo_banner_enabled: 'Tampilkan banner promo',
+  home_promo_banner_desktop_url: 'Slide 1 - gambar desktop',
+  home_promo_banner_mobile_url: 'Slide 1 - gambar mobile',
+  home_promo_banner_link: 'Slide 1 - tautan promo',
+  home_promo_banner_2_desktop_url: 'Slide 2 - gambar desktop',
+  home_promo_banner_2_mobile_url: 'Slide 2 - gambar mobile',
+  home_promo_banner_2_link: 'Slide 2 - tautan promo',
+  home_promo_banner_3_desktop_url: 'Slide 3 - gambar desktop',
+  home_promo_banner_3_mobile_url: 'Slide 3 - gambar mobile',
+  home_promo_banner_3_link: 'Slide 3 - tautan promo',
 
   footer_phone: 'Nomor telepon',
   footer_email: 'Email',
@@ -59,6 +69,7 @@ const labelMap: Record<string, string> = {
 
   general_site_name: 'Nama website',
   general_meta_description: 'Deskripsi metadata website',
+  general_favicon_url: 'Ikon browser (favicon)',
 
   link_tiktok: 'Link TikTok',
   link_fb: 'Link Facebook',
@@ -196,6 +207,10 @@ function formatLabel(key: string) {
 }
 
 function getGroup(key: string): ContentGroupId {
+  if (key.startsWith('home_promo_banner')) {
+    return 'content';
+  }
+
   if (key.startsWith('hero_') || key.includes('_hero_')) {
     return 'hero';
   }
@@ -273,6 +288,19 @@ const groupOrder: ContentGroupId[] = [
   'contact',
   'social',
   'general',
+];
+
+const promoBannerSettingOrder = [
+  'home_promo_banner_enabled',
+  'home_promo_banner_desktop_url',
+  'home_promo_banner_mobile_url',
+  'home_promo_banner_link',
+  'home_promo_banner_2_desktop_url',
+  'home_promo_banner_2_mobile_url',
+  'home_promo_banner_2_link',
+  'home_promo_banner_3_desktop_url',
+  'home_promo_banner_3_mobile_url',
+  'home_promo_banner_3_link',
 ];
 
 function shouldUseTextarea(key: string, value: string) {
@@ -401,21 +429,31 @@ export default function SettingsPage() {
   const visibleSettings = useMemo(() => {
     const keyword = search.trim().toLowerCase();
 
-    return settings.filter((setting) => {
-      const settingTab = getSiteContentTab(setting.key);
+    return settings
+      .filter((setting) => {
+        const settingTab = getSiteContentTab(setting.key);
 
-      if (settingTab !== activeTab) {
-        return false;
-      }
+        if (settingTab !== activeTab) {
+          return false;
+        }
 
-      if (!keyword) {
-        return true;
-      }
+        if (!keyword) {
+          return true;
+        }
 
-      return `${setting.key} ${formatLabel(setting.key)} ${formState[setting.key] ?? ''}`
-        .toLowerCase()
-        .includes(keyword);
-    });
+        return `${setting.key} ${formatLabel(setting.key)} ${formState[setting.key] ?? ''}`
+          .toLowerCase()
+          .includes(keyword);
+      })
+      .sort((left, right) => {
+        const leftIndex = promoBannerSettingOrder.indexOf(left.key);
+        const rightIndex = promoBannerSettingOrder.indexOf(right.key);
+
+        if (leftIndex < 0 && rightIndex < 0) return 0;
+        if (leftIndex < 0) return -1;
+        if (rightIndex < 0) return 1;
+        return leftIndex - rightIndex;
+      });
   }, [activeTab, formState, search, settings]);
 
   const groupedSettings = useMemo(() => {
@@ -660,7 +698,15 @@ export default function SettingsPage() {
                     ? 'hero'
                     : setting.key === 'header_brand_logo_url'
                       ? 'logo'
-                      : null;
+                      : setting.key === 'general_favicon_url'
+                        ? 'favicon'
+                        : setting.key.startsWith('home_promo_banner') &&
+                            setting.key.endsWith('_desktop_url')
+                          ? 'banner-desktop'
+                          : setting.key.startsWith('home_promo_banner') &&
+                              setting.key.endsWith('_mobile_url')
+                            ? 'banner-mobile'
+                            : null;
 
                 return (
                   <motion.article

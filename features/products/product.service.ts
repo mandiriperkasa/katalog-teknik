@@ -59,6 +59,7 @@ const productVariantsSchema = z
 const productCreateSchema = z
   .object({
     name: z.string().trim().min(2, 'Nama produk minimal 2 karakter.'),
+    brand: z.string().trim().min(1, 'Merek produk wajib diisi.').max(100),
     mainCategory: z.string().trim().default('Lainnya'),
     secondCategory: z.string().trim().default('Lainnya'),
     subCategory: z.string().trim().default('Lainnya'),
@@ -121,6 +122,7 @@ export async function createProduct(input: unknown) {
     {
       legacyNo: nextLegacy,
       name: parsed.name,
+      brand: parsed.brand,
       mainCategory: parsed.mainCategory || 'Lainnya',
       secondCategory: parsed.secondCategory || 'Lainnya',
       subCategory: parsed.subCategory || 'Lainnya',
