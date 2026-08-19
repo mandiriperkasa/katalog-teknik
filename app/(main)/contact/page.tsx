@@ -2,13 +2,12 @@
 
 import { motion } from 'framer-motion';
 import { CheckCircle2, Clock3, Mail, MapPin, MessageCircle, Phone, Send } from 'lucide-react';
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useMemo } from 'react';
 import { useSheetData } from '../../hooks/useSheetData';
 import PageHero from '../components/PageHero';
 
 export default function ContactPage() {
   const { data: settings } = useSheetData('Settings');
-  const [submitted, setSubmitted] = useState(false);
 
   const content = useMemo(
     () =>
@@ -262,15 +261,6 @@ export default function ContactPage() {
               </div>
             </form>
 
-            {submitted && (
-              <div className="form-success" role="status">
-                <CheckCircle2 size={17} />{' '}
-                getContent(
-					'contact_form_success',
-					'WhatsApp telah dibuka. Silakan kirim pesan untuk melanjutkan konsultasi.',
-				)}
-              </div>
-            )}
           </motion.div>
         </div>
 
