@@ -24,7 +24,7 @@ export default function ContactPage() {
     return content[key]?.trim() || fallback;
   };
 
-  const phone = content.footer_phone || '+62 821 1556 3066';
+  const phone = content.footer_phone || '+6282115563066';
   const email = content.footer_email || 'sales@mandiriperkakas.com';
   const address =
     content.footer_address ||
