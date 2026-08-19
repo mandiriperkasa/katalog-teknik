@@ -39,9 +39,51 @@ export default function ContactPage() {
     : defaultMapUrl;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSubmitted(true);
-  };
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const formData = new FormData(form);
+
+  const name = String(formData.get('name') || '').trim();
+  const email = String(formData.get('email') || '').trim();
+  const customerPhone = String(formData.get('phone') || '').trim();
+  const message = String(formData.get('message') || '').trim();
+
+  // Ambil nomor WhatsApp dari Admin.
+  // Jika kosong, gunakan nomor telepon perusahaan.
+  const rawWhatsappNumber =
+    content.whatsapp_number?.trim() || phone;
+
+  let whatsappNumber = rawWhatsappNumber.replace(/\D/g, '');
+
+  // Jika format nomor diawali 0, otomatis ubah menjadi 62.
+  // Contoh: 082115563066 -> 6282115563066
+  if (whatsappNumber.startsWith('0')) {
+    whatsappNumber = `62${whatsappNumber.substring(1)}`;
+  }
+
+  const whatsappMessage = [
+    'Halo Mandiri Perkakas,',
+    '',
+    'Saya ingin berkonsultasi mengenai kebutuhan berikut:',
+    '',
+    `*Nama:* ${name}`,
+    `*Email:* ${email}`,
+    `*Nomor Telepon:* ${customerPhone || '-'}`,
+    '',
+    '*Kebutuhan / Pesan:*',
+    message,
+    '',
+    'Pesan dikirim melalui website Mandiri Perkakas.',
+  ].join('\n');
+
+  const whatsappUrl =
+    `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+
+  window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+
+  setSubmitted(true);
+};
 
   const infoItems = [
     getContent('contact_help_item_1', 'Jenis peralatan atau layanan yang dibutuhkan.'),
@@ -211,7 +253,7 @@ export default function ContactPage() {
               </div>
               <div className="form-field-full flex flex-col gap-4 sm:flex-row sm:items-center">
                 <button type="submit" className="site-button site-button-primary">
-                  {getContent('contact_form_submit_button', 'Kirim Pesan')} <Send size={17} />
+                  {getContent('contact_form_submit_button', 'Kirim via WhatsApp')} <Send size={17} />
                 </button>
                 <span className="text-xs leading-5 text-[var(--text-muted)]">
                   {getContent(
@@ -225,10 +267,10 @@ export default function ContactPage() {
             {submitted && (
               <div className="form-success" role="status">
                 <CheckCircle2 size={17} />{' '}
-                {getContent(
-                  'contact_form_success',
-                  'Pesan sudah dicatat pada tampilan. Hubungkan form ke layanan email/API untuk pengiriman otomatis.',
-                )}
+                getContent(
+					'contact_form_success',
+					'WhatsApp telah dibuka. Silakan kirim pesan untuk melanjutkan konsultasi.',
+				)}
               </div>
             )}
           </motion.div>
