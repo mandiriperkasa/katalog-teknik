@@ -38,26 +38,24 @@ export default function ContactPage() {
     ? savedMapUrl
     : defaultMapUrl;
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+ const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
   event.preventDefault();
 
   const form = event.currentTarget;
   const formData = new FormData(form);
 
   const name = String(formData.get('name') || '').trim();
-  const email = String(formData.get('email') || '').trim();
+  const customerEmail = String(formData.get('email') || '').trim();
   const customerPhone = String(formData.get('phone') || '').trim();
   const message = String(formData.get('message') || '').trim();
 
-  // Ambil nomor WhatsApp dari Admin.
-  // Jika kosong, gunakan nomor telepon perusahaan.
+  // Nomor WhatsApp tujuan
   const rawWhatsappNumber =
-    content.whatsapp_number?.trim() || phone;
+    content.whatsapp_number?.trim() || '+6282115563066';
 
   let whatsappNumber = rawWhatsappNumber.replace(/\D/g, '');
 
-  // Jika format nomor diawali 0, otomatis ubah menjadi 62.
-  // Contoh: 082115563066 -> 6282115563066
+  // Jika nomor ditulis 08xxxx, otomatis menjadi 628xxxx
   if (whatsappNumber.startsWith('0')) {
     whatsappNumber = `62${whatsappNumber.substring(1)}`;
   }
@@ -68,21 +66,21 @@ export default function ContactPage() {
     'Saya ingin berkonsultasi mengenai kebutuhan berikut:',
     '',
     `*Nama:* ${name}`,
-    `*Email:* ${email}`,
+    `*Email:* ${customerEmail}`,
     `*Nomor Telepon:* ${customerPhone || '-'}`,
     '',
     '*Kebutuhan / Pesan:*',
     message,
     '',
-    'Pesan dikirim melalui website Mandiri Perkakas.',
+    '_Pesan ini dikirim melalui website Mandiri Perkakas._',
   ].join('\n');
 
-  const whatsappUrl =
-    `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    whatsappMessage,
+  )}`;
 
-  window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-
-  setSubmitted(true);
+  // Langsung arahkan ke WhatsApp
+  window.location.href = whatsappUrl;
 };
 
   const infoItems = [
