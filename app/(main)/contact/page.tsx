@@ -30,7 +30,7 @@ export default function ContactPage() {
     content.footer_address ||
     'Jl.Sinar Lestari B1 Kedungmundu - Semarang';
   const defaultMapUrl =
-    'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.836881774213!2d106.8785663749939!3d-6.425867993563943!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69b83b3e10759f%3A0x89e0b8d5a8b7c7b7!2sGudang%20PT%20Indolakto!5e0!3m2!1sen!2sid!4v1716382000000!5m2!1sen!2sid';
+    'https://www.google.com/maps/embed?pb=!1m17!1m11!1m3!1d648.0545790234515!2d110.474065777403!3d-7.022194851712155!2m2!1f0!2f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e70f35419e6f455%3A0x42934049854bea66!2sMandiri%20Perkakas!5e1!3m2!1sid!2sid!4v1787106352946!5m2!1sid!2sid';
 
   const savedMapUrl = content.map_url?.trim() || '';
 
